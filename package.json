@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@loloof64/chessboard-component": "^0.25.0",
     "vue": "^3.4.21"
   },
   "devDependencies": {
