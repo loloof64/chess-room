@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "export": "rm -Rf docs && cp -R dist docs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@loloof64/chessboard-component": "^0.25.0",
