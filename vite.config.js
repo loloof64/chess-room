@@ -17,13 +17,4 @@ export default defineConfig({
       targets: ['>0.01%', 'defaults'],
     }),
   ],
-  build: {
-    modulePreload: {
-      resolveDependencies: (filename, deps, { hostId, hostType }) => {
-        return deps.map((dep) => {
-          return `/docs/${dep}`
-        });
-      }
-    }
-  }
 })
