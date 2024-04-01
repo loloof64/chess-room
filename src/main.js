@@ -27,7 +27,7 @@ const getNavigatorLanguage = () => {
         return navigator.userLanguage || navigator.language || navigator.browserLanguage || 'en';
     }
 }
-const locale = getNavigatorLanguage();
+const locale = getNavigatorLanguage().substring(0, 2);
 
 const i18n = createI18n({
     fallbackLocale: 'en',
