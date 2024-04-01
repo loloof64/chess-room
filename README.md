@@ -4,7 +4,7 @@ A simple chess room
 
 ## Credits
 
-### Images
+### Images
 
 Some images have been downloaded from [SvgRepo](https://www.svgrepo.com).
 
