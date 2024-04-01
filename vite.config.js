@@ -4,7 +4,7 @@ import legacy from '@vitejs/plugin-legacy'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/docs' : '/',
+  base: './',
   plugins: [
     vue({
       template: {
