@@ -1,7 +1,9 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 const router = useRouter();
-const route = useRoute();
+
 
 const goToGamePage = () => {
     router.push('/game');
@@ -11,7 +13,7 @@ const goToGamePage = () => {
 <template>
     <div id="root">
         <button @click="goToGamePage">
-            Go to game page
+            {{ t('pages.home.goToGamePage') }}
         </button>
     </div>
 </template>
