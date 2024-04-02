@@ -1,7 +1,22 @@
 export default {
     pages: {
         home: {
-            goToGamePage: "Aller à la page de jeu"
+            createRoom: "Créér un salon"
+        },
+        createRoom: {
+            title: "Créér un salon",
+            labels: {
+                nickname: "Votre pseudo",
+            },
+            placeholders: {
+                nickname: "pseudo",
+            },
+            errors: {
+                emptyNickname: "Le pseudo ne doit pas être vide !",
+                tooShortNickname: "Le pseudo doit contenir au moins 4 caractères !",
+                failedCreatingRoom: "Échec de création du salon !",
+            },
+            submit: "Créer"
         }
     }
 };

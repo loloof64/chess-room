@@ -1,7 +1,22 @@
 export default {
     pages: {
         home: {
-            goToGamePage: "Ir a la página del juego"
+            createRoom: "Crear una sala de estar"
+        },
+        createRoom: {
+            title: "Crear una sala de estar",
+            labels: {
+                nickname: "Tu apodo",
+            },
+            placeholders: {
+                nickname: "apodo",
+            },
+            errors: {
+                emptyNickname: "¡El apodo no debe estar vacío!",
+                tooShortNickname: "¡El apodo debe contener al menos 4 caracteres!",
+                failedCreatingRoom: "¡No se pudo crear sala!",
+            },
+            submit: "Crear"
         }
     }
 };

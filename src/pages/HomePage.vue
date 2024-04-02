@@ -5,15 +5,15 @@ const { t } = useI18n();
 const router = useRouter();
 
 
-const goToGamePage = () => {
-    router.push('/game');
+const goToCreateRoomPage = () => {
+    router.push('/create-room');
 }
 </script>
 
 <template>
     <div id="root">
-        <button @click="goToGamePage">
-            {{ t('pages.home.goToGamePage') }}
+        <button @click="goToCreateRoomPage">
+            {{ t('pages.home.createRoom') }}
         </button>
     </div>
 </template>

@@ -4,7 +4,7 @@ let boardSize = ref('300');
 
 let resizeBoard = () => {
     const minSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
-    boardSize.value = minSize;
+    boardSize.value = minSize * 0.99;
 };
 
 onMounted(() => {
@@ -18,7 +18,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <loloof64-chessboard id="board" ref="board" :size="boardSize" />
+    <loloof64-chessboard ref="board" :size="boardSize" />
 </template>
 
 <style scoped></style>
