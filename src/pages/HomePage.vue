@@ -31,7 +31,7 @@ function copyIdToClipboard() {
             #{{ roomId }}
             <button @click="copyIdToClipboard"><img :src="copySvg" width="20" height="20" /></button>
         </div>
-        <button @click="goToCreateRoomPage">
+        <button v-if="!roomOwner" @click="goToCreateRoomPage">
             {{ t('pages.home.createRoom') }}
         </button>
     </div>
