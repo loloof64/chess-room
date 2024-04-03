@@ -1,7 +1,9 @@
 export default {
     pages: {
         home: {
-            createRoom: "Create a room"
+            createRoom: "Create a room",
+            yourRoom: "Your room",
+            roomIdCopied: "Room id copied in the clipboard.",
         },
         createRoom: {
             title: "Create a room",

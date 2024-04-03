@@ -1,7 +1,9 @@
 export default {
     pages: {
         home: {
-            createRoom: "Créér un salon"
+            createRoom: "Créér un salon",
+            yourRoom: "Votre salon",
+            roomIdCopied: "ID du salon copié dans le presse-papiers.",
         },
         createRoom: {
             title: "Créér un salon",

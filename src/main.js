@@ -1,6 +1,8 @@
 import { createApp } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { createI18n } from 'vue-i18n'
+import { createPinia } from 'pinia'
+import Notifications from '@kyvg/vue3-notification'
 import './style.css'
 import App from './App.vue';
 
@@ -12,7 +14,7 @@ import messages from './i18n';
 
 const routes = [
     { path: '/', component: HomePage },
-    { path: '/create-room', component: CreateRoomPage},
+    { path: '/create-room', component: CreateRoomPage },
     { path: '/game', component: GamePage },
 ];
 
@@ -38,9 +40,13 @@ const i18n = createI18n({
     messages,
 });
 
+const pinia = createPinia();
+
 import ChessBoard from '@loloof64/chessboard-component/dist';
 
 createApp(App)
+    .use(pinia)
     .use(router)
     .use(i18n)
+    .use(Notifications)
     .mount('#app')

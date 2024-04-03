@@ -1,7 +1,9 @@
 export default {
     pages: {
         home: {
-            createRoom: "Crear una sala de estar"
+            createRoom: "Crear una sala de estar",
+            yourRoom: "Su sala",
+            roomIdCopied: "ID de la sala copiada en el portapapeles.",
         },
         createRoom: {
             title: "Crear una sala de estar",

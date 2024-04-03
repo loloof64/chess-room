@@ -6,13 +6,31 @@ const { t } = useI18n();
 const router = useRouter();
 
 import { tryCreatingRoom } from '@/lib/roomHandler.js';
+import { useRoomStore } from '@/stores/RoomStore.js';
+
+const roomStore = useRoomStore();
 
 const nicknameField = ref();
 
 const nicknamePlaceholder = ref(t('pages.createRoom.placeholders.nickname'));
 const createRoom = async () => {
     const nickname = nicknameField.value.value;
-    tryCreatingRoom({ nickname, onError: (err) => alert(t(err)) });
+    const result = await tryCreatingRoom({ nickname });
+    const hasError = result.hasOwnProperty('error');
+    if (hasError) {
+        alert(t(result.error));
+
+        const isFatalError = result.isFatalError;
+        if (isFatalError) {
+            router.push({ path: '/', replace: true });
+        }
+    }
+    else {
+        const id = result.result["$id"];
+        roomStore.setRoomId(id);
+        roomStore.setRoomOwner(true);
+        router.push({ path: '/', replace: true });
+    }
 }
 </script>
 

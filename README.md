@@ -10,7 +10,7 @@ A simple chess room
 
 * Create a database in your AppWrite account, and a collection inside it.
 
-Create a file  <projectRoot>/src/credentials/appwrite.js.
+* Create a file  <projectRoot>/src/credentials/appwrite.js.
 And insert this content, replacing the placeholders with your project id, database id and collection id :
 
 ```javascript
@@ -27,3 +27,4 @@ export {appId, databaseId, collectionId};
 Some images have been downloaded from [SvgRepo](https://www.svgrepo.com).
 
 * Icon has been downloaded from https://www.svgrepo.com/svg/85723/chess
+* copy has been downloaded from https://www.svgrepo.com/svg/525288/copy

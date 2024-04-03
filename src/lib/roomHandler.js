@@ -1,20 +1,18 @@
 import { ID } from "appwrite";
 import { databases, databaseId, collectionId } from '@/lib/appwrite.js';
 
-async function tryCreatingRoom({ nickname, onError }) {
+async function tryCreatingRoom({ nickname }) {
     const isEmptyNickname = nickname.length === 0;
     const isTooShortNickname = nickname.length < 4;
     if (isEmptyNickname) {
-        onError('pages.createRoom.errors.emptyNickname');
-        return;
+        return { error: 'pages.createRoom.errors.emptyNickname' };
     }
     if (isTooShortNickname) {
-        onError('pages.createRoom.errors.tooShortNickname');
-        return;
+        return { error: 'pages.createRoom.errors.tooShortNickname' };
     }
 
     try {
-        await databases.createDocument(
+        const result = await databases.createDocument(
             databaseId,
             collectionId,
             ID.unique(),
@@ -22,10 +20,11 @@ async function tryCreatingRoom({ nickname, onError }) {
                 hostUser: nickname,
             }
         );
+        return { result };
     }
     catch (error) {
         console.error(error);
-        onError('pages.createRoom.errors.failedCreatingRoom');
+        return { error: 'pages.createRoom.errors.failedCreatingRoom', isFatalError: true };
     }
 }
 

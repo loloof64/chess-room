@@ -10,8 +10,10 @@
     "export": "rm -Rf docs && cp -R dist docs"
   },
   "dependencies": {
+    "@kyvg/vue3-notification": "^3.2.1",
     "@loloof64/chessboard-component": "^0.25.0",
     "appwrite": "13.0.2",
+    "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-i18n": "9",
     "vue-router": "4"
