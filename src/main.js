@@ -6,17 +6,8 @@ import Notifications from '@kyvg/vue3-notification'
 import './style.css'
 import App from './App.vue';
 
-import HomePage from './pages/HomePage.vue';
-import CreateRoomPage from './pages/CreateRoomPage.vue';
-import GamePage from './pages/GamePage.vue';
-
-import messages from './i18n';
-
-const routes = [
-    { path: '/', component: HomePage },
-    { path: '/create-room', component: CreateRoomPage },
-    { path: '/game', component: GamePage },
-];
+import messages from './i18n';;
+import routes from './pages';
 
 const router = createRouter({
     history: createWebHashHistory(),

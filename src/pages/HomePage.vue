@@ -16,8 +16,12 @@ function goToCreateRoomPage() {
     router.push({ path: '/create-room', replace: true });
 }
 
-function copyIdToClipboard() {
-    navigator.clipboard.writeText(roomId.value);
+function goToJoinRoomPage() {
+    router.push({ path: '/join-room', replace: true });
+}
+
+async function copyIdToClipboard() {
+    await navigator.clipboard.writeText(roomId.value);
     notify({
         text: t('pages.home.roomIdCopied'),
     });
@@ -26,13 +30,17 @@ function copyIdToClipboard() {
 
 <template>
     <div id="root">
+        <h2>{{ t('pages.home.title') }}</h2>
         <div v-if="roomId && roomOwner">
             {{ t('pages.home.yourRoom') }} :
             #{{ roomId }}
             <button @click="copyIdToClipboard"><img :src="copySvg" width="20" height="20" /></button>
         </div>
-        <button v-if="!roomOwner" @click="goToCreateRoomPage">
+        <button v-if="!roomId" @click="goToCreateRoomPage">
             {{ t('pages.home.createRoom') }}
+        </button>
+        <button v-if="!roomId" @click="goToJoinRoomPage">
+            {{ t('pages.home.joinRoom') }}
         </button>
     </div>
 </template>
@@ -43,7 +51,12 @@ function copyIdToClipboard() {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
+}
+
+button {
+    border: 1px solid blue;
+    border-radius: 10px;
 }
 </style>

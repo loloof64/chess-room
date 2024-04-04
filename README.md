@@ -27,4 +27,5 @@ export {appId, databaseId, collectionId};
 Some images have been downloaded from [SvgRepo](https://www.svgrepo.com).
 
 * Icon has been downloaded from https://www.svgrepo.com/svg/85723/chess
-* copy has been downloaded from https://www.svgrepo.com/svg/525288/copy
+* copy has been downloaded from https://www.svgrepo.com/svg/525288/
+* paste has been downloaded from https://www.svgrepo.com/svg/525279/clipboard-text
