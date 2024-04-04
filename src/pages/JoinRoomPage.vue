@@ -46,6 +46,10 @@ async function pasteId() {
         console.error(e);
     }
 }
+
+function cancel() {
+    router.push({ path: '/', replace: true });
+}
 </script>
 
 <template>
@@ -75,9 +79,57 @@ async function pasteId() {
                     </td>
                 </tr>
             </table>
-            <button @click="joinRoom">{{ t('pages.joinRoom.submit') }}</button>
+            <div id="button">
+                <button class="ok" @click="joinRoom">{{ t('pages.joinRoom.submit') }}</button>
+                <button class="cancel" @click="cancel">{{ t('pages.joinRoom.cancel') }}</button>
+            </div>
         </section>
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+#root {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 85%;
+    height: 85%;
+}
+
+section {
+    padding: 20px;
+    border: 1px solid navy;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+
+button {
+    border: 1px solid black;
+    margin: 5px 5px;
+}
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+}
+
+button.ok {
+    color: white;
+    background-color: green;
+}
+
+button.cancel {
+    color: white;
+    background-color: red;
+}
+
+button:has(> img) {
+    margin: 0px 20px;
+}
+</style>

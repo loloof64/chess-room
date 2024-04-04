@@ -20,7 +20,8 @@ export default {
                 tooShortNickname: "¡El apodo debe contener al menos 4 caracteres!",
                 failedCreatingRoom: "¡No se pudo crear sala!",
             },
-            submit: "Crear"
+            submit: "Crear",
+            cancel: "Anular",
         },
         joinRoom: {
             title: "Entrar a una sala",
@@ -39,7 +40,8 @@ export default {
                 noMatchingRoom: "¡No hay ninguna sala que coincida!",
                 failedJoiningRoom: "¡No se pudo entrar a la sala!",
             },
-            submit: "Entrar"
+            submit: "Entrar",
+            cancel: "Anular",
         }
     }
 };

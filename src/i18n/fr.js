@@ -20,7 +20,8 @@ export default {
                 tooShortNickname: "Le pseudo doit contenir au moins 4 caractères !",
                 failedCreatingRoom: "Échec de création du salon !",
             },
-            submit: "Créer"
+            submit: "Créer",
+            cancel: "Annuler",
         },
         joinRoom: {
             title: "Rejoindre un salon",
@@ -39,7 +40,8 @@ export default {
                 noMatchingRoom: "Aucun salon ne correspond !",
                 failedJoiningRoom: "Erreur en tentant de rejoindre le salon !",
             },
-            submit: "Joindre"
+            submit: "Joindre",
+            cancel: "Annuler",
         }
     }
 };

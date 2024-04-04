@@ -32,6 +32,10 @@ const createRoom = async () => {
         router.push({ path: '/', replace: true });
     }
 }
+
+function cancel() {
+    router.push({ path: '/', replace: true });
+}
 </script>
 
 <template>
@@ -52,7 +56,10 @@ const createRoom = async () => {
                     </td>
                 </tr>
             </table>
-            <button @click="createRoom">{{ t('pages.createRoom.submit') }}</button>
+            <div id="button">
+                <button class="ok" @click="createRoom">{{ t('pages.createRoom.submit') }}</button>
+                <button class="cancel" @click="cancel">{{ t('pages.createRoom.cancel') }}</button>
+            </div>
         </section>
     </div>
 </template>
@@ -79,5 +86,23 @@ section {
 
 button {
     border: 1px solid black;
+    margin: 5px 5px;
+}
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+}
+
+button.ok {
+    color: white;
+    background-color: green;
+}
+
+button.cancel {
+    color: white;
+    background-color: red;
 }
 </style>

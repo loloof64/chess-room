@@ -4,8 +4,8 @@ import { useSessionStorage } from '@vueuse/core'
 export const useRoomStore = defineStore('RoomStore', {
     state: () => {
         return {
-            roomId: useSessionStorage('roomStore$roomId', undefined),
-            roomOwner: useSessionStorage('roomStore$roomOwner', undefined),
+            roomId: useSessionStorage('RoomStore$roomId', undefined),
+            roomOwner: useSessionStorage('RoomStore$roomOwner', undefined),
         }
     },
     actions: {

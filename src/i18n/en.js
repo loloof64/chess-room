@@ -20,7 +20,8 @@ export default {
                 tooShortNickname: "Nickname must contains at least 4 characters !",
                 failedCreatingRoom: "Failed to create room !",
             },
-            submit: "Create"
+            submit: "Create",
+            cancel: "Cancel",
         },
         joinRoom: {
             title: "Join a room",
@@ -39,7 +40,8 @@ export default {
                 noMatchingRoom: "There's no matching room !",
                 failedJoiningRoom: "Failed to join room !",
             },
-            submit: "Join"
+            submit: "Join",
+            cancel: "Cancel",
         }
     }
 };
