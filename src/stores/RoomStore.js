@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
+import { useSessionStorage } from '@vueuse/core'
 
 export const useRoomStore = defineStore('RoomStore', {
     state: () => {
         return {
-            roomId: undefined,
-            roomOwner: undefined,
+            roomId: useSessionStorage('roomStore$roomId', undefined),
+            roomOwner: useSessionStorage('roomStore$roomOwner', undefined),
         }
     },
     actions: {
@@ -18,5 +19,6 @@ export const useRoomStore = defineStore('RoomStore', {
                 this.roomOwner = weAreOwner;
             }
         }
-    }
+    },
+    persist: sessionStorage,
 });

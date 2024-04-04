@@ -1,7 +1,7 @@
 <script setup>
+import { onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n';
-import { storeToRefs } from 'pinia';
 import { notify } from "@kyvg/vue3-notification";
 const { t } = useI18n();
 const router = useRouter();
@@ -9,7 +9,7 @@ const router = useRouter();
 import copySvg from '@/assets/copy.svg';
 
 import { useRoomStore } from '@/stores/RoomStore.js';
-const { roomId, roomOwner } = storeToRefs(useRoomStore());
+const roomStore = useRoomStore();
 
 
 function goToCreateRoomPage() {
@@ -21,25 +21,35 @@ function goToJoinRoomPage() {
 }
 
 async function copyIdToClipboard() {
-    await navigator.clipboard.writeText(roomId.value);
+    await navigator.clipboard.writeText(roomStore.roomId);
     notify({
         text: t('pages.home.roomIdCopied'),
     });
 }
+
+////////////////////////////////
+onMounted(() => {
+    console.log(roomStore.roomId);
+});
+////////////////////////////////
+
+onBeforeUnmount(() => {
+
+});
 </script>
 
 <template>
     <div id="root">
         <h2>{{ t('pages.home.title') }}</h2>
-        <div v-if="roomId && roomOwner">
+        <div v-if="roomStore.roomId && roomStore.roomOwner">
             {{ t('pages.home.yourRoom') }} :
-            #{{ roomId }}
+            #{{ roomStore.roomId }}
             <button @click="copyIdToClipboard"><img :src="copySvg" width="20" height="20" /></button>
         </div>
-        <button v-if="!roomId" @click="goToCreateRoomPage">
+        <button v-if="!roomStore.roomId" @click="goToCreateRoomPage">
             {{ t('pages.home.createRoom') }}
         </button>
-        <button v-if="!roomId" @click="goToJoinRoomPage">
+        <button v-if="!roomStore.roomId" @click="goToJoinRoomPage">
             {{ t('pages.home.joinRoom') }}
         </button>
     </div>
