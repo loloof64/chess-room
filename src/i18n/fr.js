@@ -38,6 +38,7 @@ export default {
                 tooShortNickname: "Le pseudo doit contenir au moins 4 caractères !",
                 emptyRoomId: "L'id du salon ne doit pas être vide !",
                 noMatchingRoom: "Aucun salon ne correspond !",
+                alreadyFilledRoom: "Ce salon est déjà occupé !",
                 failedJoiningRoom: "Erreur en tentant de rejoindre le salon !",
             },
             submit: "Joindre",

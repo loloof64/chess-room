@@ -56,6 +56,13 @@ async function tryJoiningRoom({ nickname, roomId }) {
             return { error: 'pages.joinRoom.errors.noMatchingRoom' }
         }
 
+        const matchingDocument = matchingDocuments.documents[0];
+        const isAlreadyFilledRoom = matchingDocument.guestUser;
+
+        if (isAlreadyFilledRoom) {
+            return { error: 'pages.joinRoom.errors.alreadyFilledRoom' }
+        }
+
         await databases.updateDocument(databaseId, collectionId, roomId, {
             guestUser: nickname,
         });

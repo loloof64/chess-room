@@ -38,6 +38,7 @@ export default {
                 tooShortNickname: "¡El apodo debe contener al menos 4 caracteres!",
                 emptyRoomId: "¡La identificación de la sala no debe estar vacía!",
                 noMatchingRoom: "¡No hay ninguna sala que coincida!",
+                alreadyFilledRoom: "¡Esta sala ya está ocupada!",
                 failedJoiningRoom: "¡No se pudo entrar a la sala!",
             },
             submit: "Entrar",

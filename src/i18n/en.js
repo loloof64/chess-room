@@ -38,6 +38,7 @@ export default {
                 tooShortNickname: "Nickname must contains at least 4 characters !",
                 emptyRoomId: "Room id must not be empty !",
                 noMatchingRoom: "There's no matching room !",
+                alreadyFilledRoom: "This room is already busy !",
                 failedJoiningRoom: "Failed to join room !",
             },
             submit: "Join",
