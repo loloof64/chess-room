@@ -1,5 +1,13 @@
 import { ID, Query } from "appwrite";
 import { databases, databaseId, collectionId } from '@/lib/appwrite.js';
+import { useRoomStore } from '@/stores/RoomStore.js';
+
+function generateId() {
+    const now = Date.now();
+    const factor = Math.floor(Math.random() * 100);
+
+    return (now * factor).toString();
+}
 
 async function tryCreatingRoom({ nickname }) {
     const isEmptyNickname = nickname.length === 0;
@@ -17,6 +25,7 @@ async function tryCreatingRoom({ nickname }) {
             collectionId,
             ID.unique(),
             {
+                id: generateId(),
                 hostUser: nickname,
             }
         );
@@ -48,7 +57,7 @@ async function tryJoiningRoom({ nickname, roomId }) {
             databaseId,
             collectionId,
             [
-                Query.equal('$id', roomId)
+                Query.equal('id', roomId)
             ]
         );
         const noMatchingRoom = matchingDocuments.total === 0;
@@ -63,9 +72,14 @@ async function tryJoiningRoom({ nickname, roomId }) {
             return { error: 'pages.joinRoom.errors.alreadyFilledRoom' }
         }
 
-        await databases.updateDocument(databaseId, collectionId, roomId, {
+        const docId = matchingDocument.$id;
+
+        await databases.updateDocument(databaseId, collectionId, docId, {
             guestUser: nickname,
         });
+
+        const roomStore = useRoomStore();
+        roomStore.setDocId(docId);
 
         return { isOk: true };
     }

@@ -29,8 +29,10 @@ const createRoom = async () => {
     }
     else {
         buttonsActive.value = false;
-        const id = result.result["$id"];
-        roomStore.setRoomId(id);
+        const docId = result.result["$id"];
+        const roomId = result.result["id"];
+        roomStore.setDocId(docId);
+        roomStore.setRoomId(roomId);
         roomStore.setRoomOwner(true);
         router.push({ path: '/', replace: true });
     }

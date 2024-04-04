@@ -34,12 +34,12 @@ function checkForOpponentFoundAndGoToGamePageIfReady(response) {
     const payload = response.payload;
     const localDatabaseId = payload.$databaseId;
     const localCollectionId = payload.$collectionId;
-    const localDocumentId = payload.$id;
+    const localDocumentId = payload.id;
     const guestUser = payload.guestUser;
     const roomId = roomStore.roomId;
 
     const isMatchingDocument = (databaseId == localDatabaseId) && (collectionId == localCollectionId) && (roomId == localDocumentId);
-    const hasGuestUser = guestUser !== undefined;
+    const hasGuestUser = ![null, undefined].includes(guestUser);
 
     if (isMatchingDocument && hasGuestUser) {
         router.push({ path: '/game', replace: true });
