@@ -11,6 +11,8 @@ import { tryJoiningRoom } from '@/lib/roomHandler.js';
 import { useRoomStore } from '@/stores/RoomStore.js';
 
 const roomStore = useRoomStore();
+
+const buttonsActive = ref(true);
 const nicknameField = ref();
 const roomIdField = ref();
 
@@ -31,9 +33,10 @@ async function joinRoom() {
         }
     }
     else {
+        buttonsActive.value = false;
         roomStore.setRoomId(roomId);
         roomStore.setRoomOwner(false);
-        router.push({ path: '/', replace: true });
+        router.push({ path: '/game', replace: true });
     }
 }
 
@@ -79,7 +82,7 @@ function cancel() {
                     </td>
                 </tr>
             </table>
-            <div id="button">
+            <div id="button" v-if="buttonsActive">
                 <button class="ok" @click="joinRoom">{{ t('pages.joinRoom.submit') }}</button>
                 <button class="cancel" @click="cancel">{{ t('pages.joinRoom.cancel') }}</button>
             </div>

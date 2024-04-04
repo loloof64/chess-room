@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted } from 'vue';
+import { ref, onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n';
 import { notify } from "@kyvg/vue3-notification";
@@ -27,14 +27,39 @@ async function copyIdToClipboard() {
     });
 }
 
-////////////////////////////////
+import {client, databaseId, collectionId} from '@/lib/appwrite.js'
+const unsubscribeCheckOpponentFound = ref();
+
+function checkForOpponentFoundAndGoToGamePageIfReady(response) {
+    const payload = response.payload;
+    const localDatabaseId = payload.$databaseId;
+    const localCollectionId = payload.$collectionId;
+    const localDocumentId = payload.$id;
+    const guestUser = payload.guestUser;
+    const roomId = roomStore.roomId;
+
+    const isMatchingDocument = (databaseId == localDatabaseId) && (collectionId == localCollectionId) && (roomId == localDocumentId);
+    const hasGuestUser = guestUser !== undefined;
+
+    if (isMatchingDocument && hasGuestUser) {
+        router.push({ path: '/game', replace: true });
+    }
+
+}
+
 onMounted(() => {
-    console.log(roomStore.roomId);
+    const roomId = roomStore.roomId;
+    const weAreOnwer = roomStore.roomOwner;
+    if (roomId && weAreOnwer) {
+        const realDbChannel = `databases.${databaseId}.collections.${collectionId}.documents.${roomId}"`
+        unsubscribeCheckOpponentFound.value = client.subscribe([realDbChannel, "documents"], checkForOpponentFoundAndGoToGamePageIfReady);
+    }
 });
-////////////////////////////////
 
 onBeforeUnmount(() => {
-
+    if (unsubscribeCheckOpponentFound.value) {
+        unsubscribeCheckOpponentFound.value();
+    }
 });
 </script>
 

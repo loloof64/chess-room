@@ -10,6 +10,8 @@ import { useRoomStore } from '@/stores/RoomStore.js';
 
 const roomStore = useRoomStore();
 
+const buttonsActive = ref(true);
+
 const nicknameField = ref();
 
 const nicknamePlaceholder = ref(t('pages.createRoom.placeholders.nickname'));
@@ -26,6 +28,7 @@ const createRoom = async () => {
         }
     }
     else {
+        buttonsActive.value = false;
         const id = result.result["$id"];
         roomStore.setRoomId(id);
         roomStore.setRoomOwner(true);
@@ -56,7 +59,7 @@ function cancel() {
                     </td>
                 </tr>
             </table>
-            <div id="button">
+            <div id="button" v-if="buttonsActive">
                 <button class="ok" @click="createRoom">{{ t('pages.createRoom.submit') }}</button>
                 <button class="cancel" @click="cancel">{{ t('pages.createRoom.cancel') }}</button>
             </div>
