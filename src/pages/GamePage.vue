@@ -4,8 +4,11 @@ import { useRouter } from 'vue-router'
 import History from '@/components/History.vue';
 
 import start from '@/assets/images/start.svg'
+import stop from '@/assets/images/stop.svg'
 
 import NewGameDialog from '@/components/NewGameDialog.vue';
+import GiveUpGameDialog from '@/components/GiveUpGameDialog.vue';
+
 import { openDialog } from 'vue3-promise-dialog';
 import { tryUpdatingRoom } from '@/lib/roomHandler.js';
 
@@ -18,6 +21,7 @@ const history = ref();
 const router = useRouter();
 
 const weAreHost = computed(() => ["true", true].includes(roomStore.roomOwner));
+const gameStarted = computed(() => ["true", true].includes(roomStore.gameStarted));
 
 import { client, databaseId, collectionId } from '@/lib/appwrite.js'
 const unsubscribeCheckNewGameStarted = ref();
@@ -34,7 +38,7 @@ async function openNewGameOptionsDialog() {
         console.log("Starting new game as host.")
         ///////////////////////////
         const newValues = {
-            isGameStart: true,
+            gameStarted: true,
         };
         const roomId = roomStore.roomId;
         const result = await tryUpdatingRoom({ roomId, newValues });
@@ -48,58 +52,71 @@ async function openNewGameOptionsDialog() {
     }
 }
 
+async function openGiveUpGameDialog() {
+    const result = await openDialog(GiveUpGameDialog, {});
+    if (result) {
+        //////////////////////////
+        console.log("Giving up game");
+        //////////////////////////
+        const newValues = {
+            gameStarted: false,
+        };
+        const roomId = roomStore.roomId;
+        const result = await tryUpdatingRoom({ roomId, newValues });
+        const hasError = result.hasOwnProperty('error');
+        if (hasError) {
+            alert(t(result.error));
+            return;
+        }
+        roomStore.setGameStartedStatus(false);
+    }
+}
+
 function startNewGame() {
     console.log("starting new game");
 }
 
-async function clearIsStartGameStatusInDb() {
-    const newValues = {
-        isGameStart: false,
-    };
-    const roomId = roomStore.roomId;
-    const result = await tryUpdatingRoom({ roomId, newValues });
-    const hasError = result.hasOwnProperty('error');
-    if (hasError) {
-        alert(t(result.error));
-    }
-}
-
-function checkForNewGameStartedAndStartIfReady(response) {
+function handleEventInDb(response) {
     const payload = response.payload;
     const localDatabaseId = payload.$databaseId;
     const localCollectionId = payload.$collectionId;
     const localDocumentId = payload.id;
-    const isGameStart = payload.isGameStart;
+    const gameHasStarted = ["true", true].includes(payload.gameStarted);
     const roomId = roomStore.roomId;
 
     const isMatchingDocument = (databaseId == localDatabaseId) && (collectionId == localCollectionId) && (roomId == localDocumentId);
-    const gameHasStarted = isGameStart === true;
-    const handlerAlreadyProcessed = roomStore.gameStarted;
     const weAreGuest = !weAreHost.value;
 
-    //////////////////////////////////////////////////////////////
-    console.log("handler processed", handlerAlreadyProcessed);
-    //////////////////////////////////////////////////////////////
+    
+    /////////////////////
+    console.log("handling db event")
+    console.log("db payload", payload);
+    console.log("weAreHost", weAreHost.value);
+    /////////////////////
 
-    if (isMatchingDocument && gameHasStarted && weAreGuest && !handlerAlreadyProcessed) {
-        ///////////////////////////
-        console.log("Starting new game as guest.")
-        ///////////////////////////
-        roomStore.setGameStartedStatus(true);
-        clearIsStartGameStatusInDb();
-        startNewGame();
+    if (isMatchingDocument && gameHasStarted) {
+        const gameStartHandlerAlreadyProcessed = roomStore.gameStarted;
+        if (weAreGuest && !gameStartHandlerAlreadyProcessed) {
+            ///////////////////////////
+            console.log("Starting new game as guest.")
+            ///////////////////////////
+            roomStore.setGameStartedStatus(true);
+            startNewGame();
+        }
+        else if (!gameHasStarted) {
+            console.log("Other peer has gave up game.");
+        }
     }
 }
 
 onMounted(() => {
     const roomId = roomStore.roomId;
-    const weAreGuest = !weAreHost.value;
-    if (roomId && weAreGuest) {
+    if (roomId) {
         /////////////////////////////
         console.log('registering db channel')
         /////////////////////////////
         const realDbChannel = `databases.${databaseId}.collections.${collectionId}.documents.${roomId}"`
-        unsubscribeCheckNewGameStarted.value = client.subscribe([realDbChannel, "documents"], checkForNewGameStartedAndStartIfReady);
+        unsubscribeCheckNewGameStarted.value = client.subscribe([realDbChannel, "documents"], handleEventInDb);
     }
 });
 
@@ -130,8 +147,11 @@ onBeforeUnmount(() => {
         </div>
         <div id="miscZone">
             <div id="buttons">
-                <button v-if="weAreHost" @click="openNewGameOptionsDialog">
+                <button v-if="weAreHost && !gameStarted" @click="openNewGameOptionsDialog">
                     <img :src="start" />
+                </button>
+                <button v-if="gameStarted" @click="openGiveUpGameDialog">
+                    <img :src="stop" />
                 </button>
             </div>
         </div>

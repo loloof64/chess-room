@@ -49,6 +49,11 @@ export default {
             submit: "Confirmer",
             cancel: "Annuler",
         },
+        giveUp: {
+            title: "Abandonner ?",
+            submit: "Confirmer",
+            cancel: "Annuler",
+        },
         generic: {
             errors: {
                 failedUpdatingRoom : "Échec de mise à jour du salon !",

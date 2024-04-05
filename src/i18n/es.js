@@ -49,6 +49,11 @@ export default {
             submit: "Confirmar",
             cancel: "Anular",
         },
+        giveUp: {
+            title: "¿Abandonar?",
+            submit: "Confirmar",
+            cancel: "Anular",
+        },
         generic: {
             errors: {
                 failedUpdatingRoom : "¡No se pudo actualizar la sala!",

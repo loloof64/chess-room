@@ -49,6 +49,11 @@ export default {
             submit: "Confirm",
             cancel: "Cancel",
         },
+        giveUp: {
+            title: "Give up ?",
+            submit: "Confirm",
+            cancel: "Cancel",
+        },
         generic: {
             errors: {
                 failedUpdatingRoom : "Failed to update room !",

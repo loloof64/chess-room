@@ -38,3 +38,4 @@ Some images have been downloaded from [SvgRepo](https://www.svgrepo.com).
 * forward : https://www.svgrepo.com/svg/436766/forward-fill
 * forward_end : https://www.svgrepo.com/svg/436765/forward-end-fill
 * start : https://www.svgrepo.com/svg/304738/start-line
+* stop : https://www.svgrepo.com/svg/411306/stop
