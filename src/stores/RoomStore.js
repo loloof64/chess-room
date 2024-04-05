@@ -7,6 +7,7 @@ export const useRoomStore = defineStore('RoomStore', {
             docId: useSessionStorage('RoomStore$docId', undefined),
             roomId: useSessionStorage('RoomStore$roomId', undefined),
             roomOwner: useSessionStorage('RoomStore$roomOwner', undefined),
+            gameStarted: useSessionStorage('RoomStore$gameStarted', false),
         }
     },
     actions: {
@@ -24,6 +25,9 @@ export const useRoomStore = defineStore('RoomStore', {
             if (!this.roomOwner) {
                 this.roomOwner = weAreOwner;
             }
+        },
+        setGameStartedStatus(newStatus) {
+            this.gameStarted = newStatus;
         }
     },
     persist: sessionStorage,

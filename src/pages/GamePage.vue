@@ -43,6 +43,7 @@ async function openNewGameOptionsDialog() {
             alert(t(result.error));
             return;
         }
+        roomStore.setGameStartedStatus(true);
         startNewGame();
     }
 }
@@ -64,9 +65,6 @@ async function clearIsStartGameStatusInDb() {
 }
 
 function checkForNewGameStartedAndStartIfReady(response) {
-    //////////////////////
-    console.log("checking for game start")
-    //////////////////////
     const payload = response.payload;
     const localDatabaseId = payload.$databaseId;
     const localCollectionId = payload.$collectionId;
@@ -76,15 +74,21 @@ function checkForNewGameStartedAndStartIfReady(response) {
 
     const isMatchingDocument = (databaseId == localDatabaseId) && (collectionId == localCollectionId) && (roomId == localDocumentId);
     const gameHasStarted = isGameStart === true;
-    const weAreGuest = !weAreHost;
+    const handlerAlreadyProcessed = roomStore.gameStarted;
+    const weAreGuest = !weAreHost.value;
 
-    if (isMatchingDocument && gameHasStarted && weAreGuest) {
+    //////////////////////////////////////////////////////////////
+    console.log("handler processed", handlerAlreadyProcessed);
+    //////////////////////////////////////////////////////////////
+
+    if (isMatchingDocument && gameHasStarted && weAreGuest && !handlerAlreadyProcessed) {
         ///////////////////////////
         console.log("Starting new game as guest.")
         ///////////////////////////
+        roomStore.setGameStartedStatus(true);
         clearIsStartGameStatusInDb();
+        startNewGame();
     }
-    startNewGame();
 }
 
 onMounted(() => {
