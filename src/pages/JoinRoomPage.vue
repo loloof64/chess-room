@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 const router = useRouter();
 
-import pasteSvg from '@/assets/paste.svg';
+import pasteSvg from '@/assets/images/paste.svg';
 
 import { tryJoiningRoom } from '@/lib/roomHandler.js';
 import { useRoomStore } from '@/stores/RoomStore.js';

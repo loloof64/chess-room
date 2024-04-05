@@ -89,4 +89,32 @@ async function tryJoiningRoom({ nickname, roomId }) {
     }
 }
 
-export { tryCreatingRoom, tryJoiningRoom };
+async function tryUpdatingRoom({ newValues, roomId }) {
+    try {
+        const matchingDocuments = await databases.listDocuments(
+            databaseId,
+            collectionId,
+            [
+                Query.equal('id', roomId)
+            ]
+        );
+        const noMatchingRoom = matchingDocuments.total === 0;
+        if (noMatchingRoom) {
+            console.error('No matching room when trying to update!');
+            return { error: 'page.generic.errors.failedUpdatingRoom', isFatalError: true }
+        }
+
+        const matchingDocument = matchingDocuments.documents[0];
+        const docId = matchingDocument.$id;
+
+        await databases.updateDocument(databaseId, collectionId, docId, newValues);
+
+        return { isOk: true };
+    }
+    catch (error) {
+        console.error(error);
+        return { error: 'pages.generic.errors.failedUpdatingRoom', isFatalError: true };
+    }
+}
+
+export { tryCreatingRoom, tryJoiningRoom, tryUpdatingRoom };

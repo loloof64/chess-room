@@ -43,6 +43,16 @@ export default {
             },
             submit: "Joindre",
             cancel: "Annuler",
+        },
+        newGame: {
+            title: "Nouvelle partie",
+            submit: "Confirmer",
+            cancel: "Annuler",
+        },
+        generic: {
+            errors: {
+                failedUpdatingRoom : "Échec de mise à jour du salon !",
+            }
         }
     }
 };

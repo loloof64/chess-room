@@ -6,7 +6,7 @@ import { notify } from "@kyvg/vue3-notification";
 const { t } = useI18n();
 const router = useRouter();
 
-import copySvg from '@/assets/copy.svg';
+import copySvg from '@/assets/images/copy.svg';
 
 import { useRoomStore } from '@/stores/RoomStore.js';
 const roomStore = useRoomStore();

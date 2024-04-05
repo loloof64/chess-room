@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue';
 
-import backwardEnd from '@/assets/backward_end.svg';
-import backward from '@/assets/backward.svg';
-import forward from '@/assets/forward.svg';
-import forwardEnd from '@/assets/forward_end.svg';
+import backwardEnd from '@/assets/images/backward_end.svg';
+import backward from '@/assets/images/backward.svg';
+import forward from '@/assets/images/forward.svg';
+import forwardEnd from '@/assets/images/forward_end.svg';
 
 /**
  * requestNodeSelected notifies that a move node has been clicked.
@@ -267,7 +267,7 @@ defineExpose({
 
 .main-content {
     width: 100%;
-    height: 15vh;
+    height: 3rem;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;

@@ -43,6 +43,16 @@ export default {
             },
             submit: "Entrar",
             cancel: "Anular",
+        },
+        newGame: {
+            title: "Nueva partida",
+            submit: "Confirmar",
+            cancel: "Anular",
+        },
+        generic: {
+            errors: {
+                failedUpdatingRoom : "¡No se pudo actualizar la sala!",
+            }
         }
     }
 };

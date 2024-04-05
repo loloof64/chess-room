@@ -43,6 +43,16 @@ export default {
             },
             submit: "Join",
             cancel: "Cancel",
+        },
+        newGame: {
+            title: "New game",
+            submit: "Confirm",
+            cancel: "Cancel",
+        },
+        generic: {
+            errors: {
+                failedUpdatingRoom : "Failed to update room !",
+            }
         }
     }
 };

@@ -37,3 +37,4 @@ Some images have been downloaded from [SvgRepo](https://www.svgrepo.com).
 * backward_end : https://www.svgrepo.com/svg/436645/backward-end-fill
 * forward : https://www.svgrepo.com/svg/436766/forward-fill
 * forward_end : https://www.svgrepo.com/svg/436765/forward-end-fill
+* start : https://www.svgrepo.com/svg/304738/start-line
