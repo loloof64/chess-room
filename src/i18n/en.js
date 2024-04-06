@@ -54,6 +54,11 @@ export default {
             submit: "Confirm",
             cancel: "Cancel",
         },
+        game: {
+            outcomes: {
+                gaveUp: "Game gave up by your opponent.",
+            }
+        },
         generic: {
             errors: {
                 failedUpdatingRoom : "Failed to update room !",

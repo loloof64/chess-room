@@ -1,16 +1,18 @@
 <script setup>
-import { defineExpose } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 import { closeDialog } from 'vue3-promise-dialog'
 
-async function giveUpGame() {
-    closeDialog(true);
+async function startNewGame() {
+    const newGameData = {
+        startPosition: "classic"
+    }
+    closeDialog(newGameData);
 }
 
 function cancel() {
-    closeDialog(false);
+    closeDialog();
 }
 
 defineExpose({
@@ -22,12 +24,12 @@ defineExpose({
     <div class="dialog">
         <div class="center">
             <header>
-                <h2>{{ t('pages.giveUp.title') }}</h2>
+                <h2>{{ t('pages.newGame.title') }}</h2>
             </header>
             <section>
                 <div id="button">
-                    <button class="ok" @click="giveUpGame">{{ t('pages.giveUp.submit') }}</button>
-                    <button class="cancel" @click="cancel">{{ t('pages.giveUp.cancel') }}</button>
+                    <button class="ok" @click="startNewGame">{{ t('pages.newGame.submit') }}</button>
+                    <button class="cancel" @click="cancel">{{ t('pages.newGame.cancel') }}</button>
                 </div>
             </section>
         </div>

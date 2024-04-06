@@ -54,6 +54,11 @@ export default {
             submit: "Confirmer",
             cancel: "Annuler",
         },
+        game: {
+            outcomes: {
+                gaveUp: "Partie abandonnée par votre adversaire.",
+            }
+        },
         generic: {
             errors: {
                 failedUpdatingRoom : "Échec de mise à jour du salon !",
