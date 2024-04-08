@@ -61,7 +61,8 @@ export default {
         },
         generic: {
             errors: {
-                failedUpdatingRoom : "¡No se pudo actualizar la sala!",
+                failedUpdatingRoom : "¡No se pudo actualizar la sala en la base de datos!",
+                failedReadingRoom: "¡No se pudo leer la sala de la base de datos!"
             }
         }
     }

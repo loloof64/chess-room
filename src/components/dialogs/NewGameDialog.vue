@@ -1,12 +1,18 @@
 <script setup>
+import { ref, onMounted } from "vue"
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
+import { DEFAULT_POSITION } from 'chess.js'
 
 import { closeDialog } from 'vue3-promise-dialog'
 
-async function startNewGame() {
+const currentPosition = ref(DEFAULT_POSITION);
+const previewBoard = ref();
+const previewSize = ref("100");
+
+function startNewGame() {
     const newGameData = {
-        startPosition: "classic"
+        startPosition: currentPosition.value,
     }
     closeDialog(newGameData);
 }
@@ -15,8 +21,14 @@ function cancel() {
     closeDialog();
 }
 
+onMounted(() => {
+    const minSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
+    previewSize.value = `${minSize * 0.75}`
+    previewBoard.value.newGame(currentPosition.value)
+});
+
 defineExpose({
-    returnValue: () => {return;},
+    returnValue: () => { return; },
 })
 </script>
 
@@ -27,6 +39,8 @@ defineExpose({
                 <h2>{{ t('pages.newGame.title') }}</h2>
             </header>
             <section>
+                <loloof64-chessboard id="previewBoard" ref="previewBoard" :size="previewSize" white_player_human="false"
+                    black_player_human="false" />
                 <div id="button">
                     <button class="ok" @click="startNewGame">{{ t('pages.newGame.submit') }}</button>
                     <button class="cancel" @click="cancel">{{ t('pages.newGame.cancel') }}</button>
@@ -38,6 +52,7 @@ defineExpose({
 
 <style scoped>
 .dialog {
+    z-index: 100;
     position: fixed;
     top: 0;
     left: 0;
@@ -61,7 +76,7 @@ section {
     border-radius: 20px;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-evenly;
     align-items: center;
 }
 

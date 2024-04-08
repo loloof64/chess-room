@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useSessionStorage } from '@vueuse/core'
+import { emptyPosition } from '@/constants'
 
 export const useRoomStore = defineStore('RoomStore', {
     state: () => {
@@ -8,6 +9,7 @@ export const useRoomStore = defineStore('RoomStore', {
             roomId: useSessionStorage('RoomStore$roomId', undefined),
             roomOwner: useSessionStorage('RoomStore$roomOwner', undefined),
             gameStarted: useSessionStorage('RoomStore$gameStarted', false),
+            startPosition: useSessionStorage('RoomStore$startPosition', emptyPosition),
         }
     },
     actions: {
@@ -28,6 +30,9 @@ export const useRoomStore = defineStore('RoomStore', {
         },
         setGameStartedStatus(newStatus) {
             this.gameStarted = newStatus;
+        },
+        setStartPosition(newPosition) {
+            this.startPosition = newPosition;
         }
     },
     persist: sessionStorage,

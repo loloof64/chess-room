@@ -3,10 +3,9 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n';
 import { notify } from "@kyvg/vue3-notification";
-const { t } = useI18n();
 
-import {noGiveUp, hostGaveUp, guestGaveUp} from '@/constants.js';
-import History from '@/components/History.vue';
+import { noGiveUp, hostGaveUp, guestGaveUp } from '@/constants.js';
+import ChessHistory from '@/components/ChessHistory.vue';
 
 import start from '@/assets/images/start.svg'
 import stop from '@/assets/images/stop.svg'
@@ -15,15 +14,21 @@ import NewGameDialog from '@/components/dialogs/NewGameDialog.vue';
 import GiveUpGameDialog from '@/components/dialogs/GiveUpGameDialog.vue';
 
 import { openDialog } from 'vue3-promise-dialog';
-import { tryUpdatingRoom } from '@/lib/roomHandler.js';
+import { tryUpdatingRoom, tryReadingRoom } from '@/lib/roomHandler.js';
 
 import { useRoomStore } from '@/stores/RoomStore.js';
-const roomStore = useRoomStore();
+import { useGameStore } from '@/stores/GameStore.js';
 
-const boardSize = ref('300');
+const { t } = useI18n();
+const roomStore = useRoomStore();
+const gameStore = useGameStore();
+
+const boardSize = ref('100');
 const board = ref();
 const history = ref();
 const router = useRouter();
+const whitePlayerHuman = ref(false);
+const blackPlayerHuman = ref(false);
 
 const weAreHost = computed(() => ["true", true].includes(roomStore.roomOwner));
 const gameStarted = computed(() => ["true", true].includes(roomStore.gameStarted));
@@ -31,17 +36,33 @@ const gameStarted = computed(() => ["true", true].includes(roomStore.gameStarted
 import { client, databaseId, collectionId } from '@/lib/appwrite.js'
 const unsubscribeCheckNewGameStarted = ref();
 
-const resizeBoard = () => {
+function resizeBoard() {
     const minSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
-    boardSize.value = minSize * 0.82;
+    boardSize.value = `${minSize * 0.90}`;
 };
+
+async function startNewGame() {
+    const roomId = roomStore.roomId;
+    const result = await tryReadingRoom({ roomId });
+    const hasError = result.hasOwnProperty('error');
+    if (hasError) {
+        alert(t(result.error));
+        return;
+    }
+    const startPosition = result.matchingDocument.startPosition;
+    roomStore.setStartPosition(startPosition);
+    board.value.newGame(startPosition);
+    gameStore.setCurrentPosition(startPosition);
+}
 
 async function openNewGameOptionsDialog() {
     const result = await openDialog(NewGameDialog, {});
+    const { startPosition } = result;
     if (result) {
         const newValues = {
             gameStarted: true,
             giveUpSide: noGiveUp,
+            startPosition,
         };
         const roomId = roomStore.roomId;
         const result = await tryUpdatingRoom({ roomId, newValues });
@@ -51,6 +72,7 @@ async function openNewGameOptionsDialog() {
             return;
         }
         roomStore.setGameStartedStatus(true);
+        roomStore.setStartPosition(startPosition);
         startNewGame();
     }
 }
@@ -72,9 +94,6 @@ async function openGiveUpGameDialog() {
         }
         roomStore.setGameStartedStatus(false);
     }
-}
-
-function startNewGame() {
 }
 
 function handleEventInDb(response) {
@@ -132,13 +151,20 @@ onMounted(() => {
 onBeforeUnmount(() => {
     window.removeEventListener("resize", resizeBoard);
 });
+
+onMounted(() => {
+    board.value.newGame(gameStore.currentPosition);
+    whitePlayerHuman.value = gameStore.whitePlayerHuman;
+    blackPlayerHuman.value = gameStore.blackPlayerHuman;
+});
 </script>
 
 <template>
     <div id="root">
         <div id="gameZone">
-            <history ref="history" />
-            <loloof64-chessboard ref="board" :size="boardSize" />
+            <chess-history ref="history" />
+            <loloof64-chessboard id="board" ref="board" :size="boardSize" :white_player_human="whitePlayerHuman"
+    :black_player_human="blackPlayerHuman" />
         </div>
         <div id="miscZone">
             <div id="buttons">
@@ -173,6 +199,10 @@ onBeforeUnmount(() => {
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;
+}
+
+#board {
+    width: v-bind(boardSize);
 }
 
 #buttons {

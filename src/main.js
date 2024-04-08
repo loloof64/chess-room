@@ -33,7 +33,7 @@ const i18n = createI18n({
 
 const pinia = createPinia();
 
-import ChessBoard from '@loloof64/chessboard-component/dist';
+import '@loloof64/chessboard-component/dist'
 
 createApp(App)
     .use(pinia)

@@ -61,7 +61,8 @@ export default {
         },
         generic: {
             errors: {
-                failedUpdatingRoom : "Failed to update room !",
+                failedUpdatingRoom : "Failed to update room in database !",
+                failedReadingRoom: "Failed to read room from database !"
             }
         }
     }

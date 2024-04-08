@@ -61,7 +61,8 @@ export default {
         },
         generic: {
             errors: {
-                failedUpdatingRoom : "Échec de mise à jour du salon !",
+                failedUpdatingRoom : "Échec de mise à jour du salon dans la base de données !",
+                failedReadingRoom: "Échec de lecture du salon depuis la base de données !"
             }
         }
     }
