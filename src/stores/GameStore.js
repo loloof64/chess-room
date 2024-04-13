@@ -17,6 +17,14 @@ export const useGameStore = defineStore("GameStore", {
         "GameStore$blackPlayerIsHuman",
         false
       ),
+      whiteNickname: useSessionStorage(
+        "GameStore$whiteNickname",
+        ""
+      ),
+      blackNickname: useSessionStorage(
+        "GameStore$blackNickname",
+        ""
+      ),
     };
   },
   actions: {
@@ -29,6 +37,12 @@ export const useGameStore = defineStore("GameStore", {
     setBlackPlayerIsHuman(newStatus) {
       this.blackPlayerIsHuman = newStatus;
     },
+    setWhiteNickname(newName) {
+      this.whiteNickname = newName;
+    },
+    setBlackNickname(newName) {
+      this.blackNickname = newName;
+    }
   },
   persist: sessionStorage,
 });

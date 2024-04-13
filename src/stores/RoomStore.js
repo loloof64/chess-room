@@ -9,6 +9,7 @@ export const useRoomStore = defineStore("RoomStore", {
       roomId: useSessionStorage("RoomStore$roomId", undefined),
       roomOwner: useSessionStorage("RoomStore$roomOwner", undefined),
       gameStarted: useSessionStorage("RoomStore$gameStarted", false),
+      atLeastAGameStarted: useSessionStorage("RoomStore$atLeastAGameStarted", false),
       startPosition: useSessionStorage(
         "RoomStore$startPosition",
         emptyPosition
@@ -33,6 +34,9 @@ export const useRoomStore = defineStore("RoomStore", {
     },
     setGameStartedStatus(newStatus) {
       this.gameStarted = newStatus;
+    },
+    setAtLeastAGameStartedStatus(newStatus) {
+      this.atLeastAGameStarted = newStatus;
     },
     setStartPosition(newPosition) {
       this.startPosition = newPosition;

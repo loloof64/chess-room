@@ -19,7 +19,7 @@ import { tryUpdatingRoom, tryReadingRoom } from "@/lib/roomHandler.js";
 import { useRoomStore } from "@/stores/RoomStore.js";
 import { useGameStore } from "@/stores/GameStore.js";
 
-import { storeToRefs } from "pinia";
+import { createPinia, storeToRefs } from "pinia";
 
 const { t } = useI18n();
 const roomStore = useRoomStore();
@@ -30,12 +30,19 @@ const board = ref();
 const history = ref();
 const router = useRouter();
 
+const atLeastAGameStarted = ref(false);
+
 const weAreHost = computed(() => ["true", true].includes(roomStore.roomOwner));
 const gameStarted = computed(() =>
   ["true", true].includes(roomStore.gameStarted)
 );
-const { currentPosition, whitePlayerIsHuman, blackPlayerIsHuman } =
-  storeToRefs(gameStore);
+const {
+  currentPosition,
+  whitePlayerIsHuman,
+  blackPlayerIsHuman,
+  whiteNickname,
+  blackNickname,
+} = storeToRefs(gameStore);
 
 import { client, databaseId, collectionId } from "@/lib/appwrite.js";
 const unsubscribeCheckNewGameStarted = ref();
@@ -56,7 +63,8 @@ async function startNewGame() {
     alert(t(result.error));
     return;
   }
-  const { startPosition, hostHasWhite } = result.matchingDocument;
+  const { startPosition, hostHasWhite, hostUser, guestUser } =
+    result.matchingDocument;
   roomStore.setStartPosition(startPosition);
   board.value.newGame(startPosition);
   gameStore.setCurrentPosition(startPosition);
@@ -66,6 +74,10 @@ async function startNewGame() {
     (!hostPlaysWithWhiteSide && !weAreHost.value);
   gameStore.setWhitePlayerIsHuman(weHaveWhite);
   gameStore.setBlackPlayerIsHuman(!weHaveWhite);
+  gameStore.setWhiteNickname(hostHasWhite ? hostUser : guestUser);
+  gameStore.setBlackNickname(hostHasWhite ? guestUser : hostUser);
+  atLeastAGameStarted.value = true;
+  roomStore.setAtLeastAGameStartedStatus(true);
 }
 
 async function openNewGameOptionsDialog() {
@@ -144,6 +156,8 @@ function handleEventInDb(response) {
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
+        gameStore.setWhiteNickname("");
+        gameStore.setBlackNickname("");
         notify({
           text: t("pages.game.outcomes.gaveUp"),
         });
@@ -180,6 +194,7 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   board.value.newGame(currentPosition.value);
+  atLeastAGameStarted.value = roomStore.atLeastAGameStarted;
 });
 </script>
 
@@ -196,6 +211,7 @@ onMounted(() => {
       />
     </div>
     <div id="miscZone">
+      <!-- buttons -->
       <div id="buttons">
         <button
           v-if="weAreHost && !gameStarted"
@@ -206,6 +222,17 @@ onMounted(() => {
         <button v-if="gameStarted" @click="openGiveUpGameDialog">
           <img :src="stop" />
         </button>
+      </div>
+      <!-- buttons -->
+      <div id="nicknames" v-if="atLeastAGameStarted">
+        <div class="nickname">
+          <div class="color white" />
+          <p>{{ whiteNickname }}</p>
+        </div>
+        <div class="nickname">
+          <div class="color black" />
+          <p>{{ blackNickname }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -227,13 +254,15 @@ onMounted(() => {
 }
 
 #miscZone {
+  margin: 0 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
 }
 
 #buttons {
+  margin: 6px 0;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -248,6 +277,46 @@ onMounted(() => {
 #buttons > button > img {
   width: 40px;
   height: 40px;
+}
+
+#nicknames {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 20vh;
+  border: 1px solid blue;
+  border-radius: 10px;
+}
+
+.nickname {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 2px;
+}
+
+.nickname > .color {
+  width: 3vw;
+  margin: 0 8px;
+  height: 3vw;
+  border: 1px solid black;
+  border-radius: 4px;
+}
+
+.nickname > .color.white {
+  background-color: white;
+}
+
+.nickname > .color.black {
+  background-color: black;
+}
+
+.nickname > p {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+  font-size: large;
 }
 
 @media (max-width: 1000px) {
