@@ -48,6 +48,9 @@ export default {
             title: "New game",
             submit: "Confirm",
             cancel: "Cancel",
+            hasWhite: "Do you have white ?",
+            hasWhiteYes: "Yes",
+            hasWhiteNo: "No",
         },
         giveUp: {
             title: "Give up ?",

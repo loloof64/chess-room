@@ -48,6 +48,9 @@ export default {
             title: "Nueva partida",
             submit: "Confirmar",
             cancel: "Anular",
+            hasWhite: "¿Tiene los blancos?",
+            hasWhiteYes: "Sí",
+            hasWhiteNo: "No",
         },
         giveUp: {
             title: "¿Abandonar?",
