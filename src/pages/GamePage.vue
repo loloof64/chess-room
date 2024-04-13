@@ -156,8 +156,6 @@ function handleEventInDb(response) {
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
-        gameStore.setWhiteNickname("");
-        gameStore.setBlackNickname("");
         notify({
           text: t("pages.game.outcomes.gaveUp"),
         });
