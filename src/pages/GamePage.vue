@@ -8,6 +8,7 @@ import ChessHistory from "@/components/ChessHistory.vue";
 
 import start from "@/assets/images/start.svg";
 import stop from "@/assets/images/stop.svg";
+import reverse from "@/assets/images/reverse.svg";
 
 import NewGameDialog from "@/components/dialogs/NewGameDialog.vue";
 import GiveUpGameDialog from "@/components/dialogs/GiveUpGameDialog.vue";
@@ -173,6 +174,10 @@ function handleEventInDb(response) {
   }
 }
 
+function toggleBoardOrientation() {
+  boardReversed.value = ! boardReversed.value;
+}
+
 onMounted(() => {
   const roomId = roomStore.roomId;
   if (roomId) {
@@ -223,6 +228,11 @@ onMounted(() => {
       <!-- buttons -->
       <div id="buttons">
         <button
+          @click="toggleBoardOrientation"
+        >
+          <img :src="reverse" />
+        </button>
+        <button
           v-if="weAreHost && !gameStarted"
           @click="openNewGameOptionsDialog"
         >
@@ -250,7 +260,7 @@ onMounted(() => {
 <style scoped>
 #pageRoot {
   display: flex;
-  height: 90vh;
+  height: 80vh;
   flex-direction: row;
   justify-content: center;
   align-items: center;
