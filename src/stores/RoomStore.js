@@ -5,11 +5,14 @@ import { emptyPosition } from "@/constants";
 export const useRoomStore = defineStore("RoomStore", {
   state: () => {
     return {
-      docId: useSessionStorage("RoomStore$docId", undefined),
-      roomId: useSessionStorage("RoomStore$roomId", undefined),
-      roomOwner: useSessionStorage("RoomStore$roomOwner", undefined),
+      docId: useSessionStorage("RoomStore$docId", ""),
+      roomId: useSessionStorage("RoomStore$roomId", ""),
+      roomOwner: useSessionStorage("RoomStore$roomOwner", false),
       gameStarted: useSessionStorage("RoomStore$gameStarted", false),
-      atLeastAGameStarted: useSessionStorage("RoomStore$atLeastAGameStarted", false),
+      atLeastAGameStarted: useSessionStorage(
+        "RoomStore$atLeastAGameStarted",
+        false
+      ),
       startPosition: useSessionStorage(
         "RoomStore$startPosition",
         emptyPosition

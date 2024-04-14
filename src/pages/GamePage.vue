@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { notify } from "@kyvg/vue3-notification";
 
@@ -19,7 +18,7 @@ import { tryUpdatingRoom, tryReadingRoom } from "@/lib/roomHandler.js";
 import { useRoomStore } from "@/stores/RoomStore.js";
 import { useGameStore } from "@/stores/GameStore.js";
 
-import { createPinia, storeToRefs } from "pinia";
+import { storeToRefs } from "pinia";
 
 const { t } = useI18n();
 const roomStore = useRoomStore();
@@ -28,7 +27,7 @@ const gameStore = useGameStore();
 const boardSize = ref("100");
 const board = ref();
 const history = ref();
-const router = useRouter();
+const boardReversed = ref(false);
 
 const atLeastAGameStarted = ref(false);
 
@@ -99,6 +98,11 @@ async function openNewGameOptionsDialog() {
     }
     roomStore.setGameStartedStatus(true);
     roomStore.setStartPosition(startPosition);
+    const weAreHost = roomStore.roomOwner;
+    const boardShouldBeReversed =
+      (withWhiteSide && !weAreHost) || (!withWhiteSide && weAreHost);
+    gameStore.setBoardReversedStatus(boardShouldBeReversed);
+    boardReversed.value = boardShouldBeReversed;
     startNewGame();
   }
 }
@@ -142,7 +146,12 @@ function handleEventInDb(response) {
     if (gameHasStarted) {
       const gameStartHandlerAlreadyProcessed = roomStore.gameStarted;
       if (weAreGuest && !gameStartHandlerAlreadyProcessed) {
+        const boardShouldBeReversed =
+          (payload.hostHasWhite && !payload.roomOwner) ||
+          (!payload.hostHasWhite && payload.roomOwner);
         roomStore.setGameStartedStatus(true);
+        gameStore.setBoardReversedStatus(boardShouldBeReversed);
+        boardReversed.value = boardShouldBeReversed;
         startNewGame();
       }
     }
@@ -193,6 +202,7 @@ onBeforeUnmount(() => {
 onMounted(() => {
   board.value.newGame(currentPosition.value);
   atLeastAGameStarted.value = roomStore.atLeastAGameStarted;
+  boardReversed.value = gameStore.boardReversed;
 });
 </script>
 
@@ -206,6 +216,7 @@ onMounted(() => {
         size="300"
         :whitePlayerHuman="whitePlayerIsHuman"
         :blackPlayerHuman="blackPlayerIsHuman"
+        :reversed="boardReversed"
       />
     </div>
     <div id="miscZone">
@@ -239,6 +250,7 @@ onMounted(() => {
 <style scoped>
 #pageRoot {
   display: flex;
+  height: 90vh;
   flex-direction: row;
   justify-content: center;
   align-items: center;

@@ -25,6 +25,10 @@ export const useGameStore = defineStore("GameStore", {
         "GameStore$blackNickname",
         ""
       ),
+      boardReversed: useSessionStorage(
+        "GameStore$boardReversed",
+        false,
+      )
     };
   },
   actions: {
@@ -42,6 +46,9 @@ export const useGameStore = defineStore("GameStore", {
     },
     setBlackNickname(newName) {
       this.blackNickname = newName;
+    },
+    setBoardReversedStatus(newStatus) {
+      this.boardReversed = newStatus;
     }
   },
   persist: sessionStorage,
