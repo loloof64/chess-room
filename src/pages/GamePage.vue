@@ -45,7 +45,6 @@ const {
 } = storeToRefs(gameStore);
 
 import { client, databaseId, collectionId } from "@/lib/appwrite.js";
-import { Chess } from "chess.js";
 const unsubscribeCheckNewGameStarted = ref();
 
 function resizeBoard() {
@@ -66,6 +65,12 @@ async function startNewGame() {
   }
   const { startPosition, hostHasWhite, hostUser, guestUser } =
     result.matchingDocument;
+  const startPositionParts = startPosition.split(" ");
+  const moveNumber = parseInt(startPositionParts[5]);
+  const whiteTurn = startPositionParts[1] === "w";
+  history.value.reset(moveNumber, whiteTurn);
+  gameStore.setHistoryNodes(history.value.getNodes());
+
   roomStore.setStartPosition(startPosition);
   board.value.newGame(startPosition);
   gameStore.setCurrentPosition(startPosition);
@@ -79,12 +84,6 @@ async function startNewGame() {
   gameStore.setBlackNickname(hostHasWhite ? guestUser : hostUser);
   atLeastAGameStarted.value = true;
   roomStore.setAtLeastAGameStartedStatus(true);
-
-  const startPositionParts = startPosition.split(" ");
-  const moveNumber = parseInt(startPositionParts[5]);
-  const whiteTurn = startPositionParts[1] === "w";
-  history.value.reset(moveNumber, whiteTurn);
-  gameStore.setHistoryNodes(history.value.getNodes());
 
   gameStore.setLastMoveArrow({
     start: {
@@ -147,6 +146,18 @@ async function openGiveUpGameDialog() {
   }
 }
 
+function moveCoordinatesToLongUciNotation(coodinates) {
+  const firstFile = String.fromCharCode(
+    "a".charCodeAt(0) + coodinates.startFile
+  );
+  const firstRank = String.fromCharCode(
+    "1".charCodeAt(0) + coodinates.startRank
+  );
+  const endFile = String.fromCharCode("a".charCodeAt(0) + coodinates.endFile);
+  const endRank = String.fromCharCode("1".charCodeAt(0) + coodinates.endRank);
+  return `${firstFile}${firstRank}${endFile}${endRank}`;
+}
+
 function handleEventInDb(response) {
   const payload = response.payload;
   const localDatabaseId = payload.$databaseId;
@@ -173,6 +184,33 @@ function handleEventInDb(response) {
         boardReversed.value = boardShouldBeReversed;
         startNewGame();
       }
+      // try to play lastMoveSan
+      const success = board.value.playManualMove(
+        moveCoordinatesToLongUciNotation({
+          startFile: payload.lastMoveStartFile,
+          startRank: payload.lastMoveStartRank,
+          endFile: payload.lastMoveEndFile,
+          endRank: payload.lastMoveEndRank,
+          promotion: payload.lastMovePromotion,
+        })
+      );
+      if (!success) {
+        console.log(`Illegal move ${payload.lastMoveSan}`);
+        console.log(`Board position is ${board.value.getCurrentPosition()}`);
+        return;
+      }
+      gameStore.setLastMoveArrow({
+        start: {
+          file: payload.lastMoveStartFile,
+          rank: payload.lastMoveStartRank,
+        },
+        end: {
+          file: payload.lastMoveEndFile,
+          rank: payload.lastMoveEndRank,
+        },
+      });
+      const resultingPosition = board.value.getCurrentPosition();
+      currentPosition.value = resultingPosition;
     }
     // !gameHasStarted
     else {
@@ -196,16 +234,18 @@ function toggleBoardOrientation() {
   boardReversed.value = !boardReversed.value;
 }
 
-function handleMoveDone(
+async function handleMoveDone(
   moveNumber,
   whiteTurn,
   moveSan,
   moveFan,
   resultingPosition,
-  move
+  move,
+  promotion
 ) {
   history.value.addNode({
     number: moveNumber,
+    whiteTurn,
     fan: moveFan,
     fen: resultingPosition,
     fromFileIndex: move.start.file,
@@ -216,6 +256,24 @@ function handleMoveDone(
   gameStore.setHistoryNodes(history.value.getNodes());
   gameStore.setLastMoveArrow(move);
   currentPosition.value = resultingPosition;
+
+  // Notify about move done in database
+  const newValues = {
+    lastMoveSan: moveSan,
+    lastMoveFan: moveFan,
+    lastMoveStartFile: move.start.file,
+    lastMoveStartRank: move.start.rank,
+    lastMoveEndFile: move.end.file,
+    lastMoveEndRank: move.end.rank,
+    lastMovePromotion: promotion,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+  if (hasError) {
+    alert(t(result.error));
+    return;
+  }
 }
 
 onMounted(() => {

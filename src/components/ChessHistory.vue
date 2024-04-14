@@ -1,10 +1,10 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from "vue";
 
-import backwardEnd from '@/assets/images/backward_end.svg';
-import backward from '@/assets/images/backward.svg';
-import forward from '@/assets/images/forward.svg';
-import forwardEnd from '@/assets/images/forward_end.svg';
+import backwardEnd from "@/assets/images/backward_end.svg";
+import backward from "@/assets/images/backward.svg";
+import forward from "@/assets/images/forward.svg";
+import forwardEnd from "@/assets/images/forward_end.svg";
 
 /**
  * requestNodeSelected notifies that a move node has been clicked.
@@ -15,11 +15,11 @@ import forwardEnd from '@/assets/images/forward_end.svg';
  * @param {Number} fromRankIndex - the start rank index of matching move.
  * @param {Number} toFileIndex - the end file index of matching move.
  * @param {Number} toRankIndex - the end rank index of matching move.
- * 
+ *
  * requestStartPosition notifies that we want to go in the start position of the game.
  * Does not take any parameter.
  */
-const emit = defineEmits(['requestNodeSelected', 'requestStartPosition']);
+const emit = defineEmits(["requestNodeSelected", "requestStartPosition"]);
 
 const nodes = ref([]);
 const mainContent = ref();
@@ -32,7 +32,7 @@ const navigationMode = ref(false);
  * @param {Boolean} startsAsWhite : true if white starts the game, false otherwise.
  */
 function reset(startMoveNumber, startsAsWhite) {
-  const moveNumberText = `${startMoveNumber}.${startsAsWhite ? '' : '..'}`;
+  const moveNumberText = `${startMoveNumber}.${startsAsWhite ? "" : ".."}`;
   navigationMode.value = false;
   selectedNodeIndex.value = -1;
   nodes.value = [{ number: moveNumberText }];
@@ -47,20 +47,57 @@ function reset(startMoveNumber, startsAsWhite) {
  * @param fromRankIndex: Number? (can be undefined) - the start rank index of the move
  * @param toFileIndex: Number? (can be undefined) - the end file index of the move
  * @param toRankIndex: Number? (can be undefined) - the end rank index of the move
- *  
+ * @param whiteTurn: Boolean? (can be undefined) - is it white turn ?
+ *
  */
 function addNode(parameters) {
-  const { number, fan, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } = parameters;
-  // We skip the move number for the first move, as it's already added
-  const realNumber = nodes.value.length > 1 ? number : '';
-  nodes.value = [...nodes.value, { number: realNumber, fan, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex }];
+  const {
+    number,
+    fan,
+    fen,
+    fromFileIndex,
+    fromRankIndex,
+    toFileIndex,
+    toRankIndex,
+    whiteTurn,
+  } = parameters;
+  // We append data for the first move, as it's already added, if he has not any relevant data yet.
+  if (nodes.value.length === 1 && !(nodes.value[0].fan)) {
+    const oldValue = nodes.value[0];
+    const newValue = {
+      ...oldValue,
+      fan,
+      fen,
+      fromFileIndex,
+      fromRankIndex,
+      toFileIndex,
+      toRankIndex,
+      whiteTurn,
+    };
+    nodes.value[0] = newValue;
+  } else {
+    const numberString = `${number}.${whiteTurn === true ? "" : ".."}`;
+    nodes.value = [
+      ...nodes.value,
+      {
+        number: numberString,
+        fan,
+        fen,
+        fromFileIndex,
+        fromRankIndex,
+        toFileIndex,
+        toRankIndex,
+        whiteTurn,
+      },
+    ];
+  }
 }
 
 /**
  * Scroll, so that the last child is visible.
  */
 function scrollToLastElement() {
-  const lastChild = document.querySelector('.main-content span:last-child');
+  const lastChild = document.querySelector(".main-content span:last-child");
   lastChild.scrollIntoView();
 }
 
@@ -68,21 +105,23 @@ function scrollToLastElement() {
  * Sets the selected node :
  * - highlight it
  * - scrolls to it
- * @param {Number} nodeIndex 
+ * @param {Number} nodeIndex
  */
 function setSelectedNode(nodeIndex) {
   // Needing to be sure that clicking on next move will point to first move node.
   if (nodeIndex < 0) nodeIndex = -1;
   selectedNodeIndex.value = nodeIndex;
   if (nodeIndex > 0) {
-    const targetChild = document.querySelector(`.main-content span:nth-child(${nodeIndex})`);
+    const targetChild = document.querySelector(
+      `.main-content span:nth-child(${nodeIndex})`
+    );
     targetChild.scrollIntoView();
   }
 }
 
 function requestStartPositionOnBoard() {
   if (!navigationMode.value) return;
-  emit('requestStartPosition');
+  emit("requestStartPosition");
 }
 
 function scrollToTop() {
@@ -97,7 +136,11 @@ function selectStartPosition() {
 
 function selectPreviousNode() {
   if (!navigationMode.value) return;
-  for (selectedNodeIndex.value -= 1; selectedNodeIndex.value >= 0; selectedNodeIndex.value--) {
+  for (
+    selectedNodeIndex.value -= 1;
+    selectedNodeIndex.value >= 0;
+    selectedNodeIndex.value--
+  ) {
     const currentNode = nodes.value[selectedNodeIndex.value];
     const isAMoveNode = currentNode.fen;
     if (isAMoveNode) break;
@@ -105,12 +148,9 @@ function selectPreviousNode() {
 
   if (selectedNodeIndex.value >= 0) {
     const node = nodes.value[selectedNodeIndex.value];
-    const { fen,
-      fromFileIndex,
-      fromRankIndex,
-      toFileIndex,
-      toRankIndex } = node;
-    emit('requestNodeSelected', {
+    const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } =
+      node;
+    emit("requestNodeSelected", {
       nodeIndex: selectedNodeIndex.value,
       fen,
       fromFileIndex,
@@ -118,31 +158,27 @@ function selectPreviousNode() {
       toFileIndex,
       toRankIndex,
     });
-  }
-  else {
+  } else {
     selectStartPosition();
   }
 }
 
-
 function selectLastNode() {
   if (!navigationMode.value) return;
-  for (selectedNodeIndex.value += 1; selectedNodeIndex.value < nodes.value.length; selectedNodeIndex.value++) {
-  }
+  for (
+    selectedNodeIndex.value += 1;
+    selectedNodeIndex.value < nodes.value.length;
+    selectedNodeIndex.value++
+  ) {}
 
   const node = nodes.value[selectedNodeIndex.value];
-  if (!(node?.fen)) {
+  if (!node?.fen) {
     // cancelling progress in history if we point to a number node
     selectPreviousNode();
   }
 
-
-  const { fen,
-    fromFileIndex,
-    fromRankIndex,
-    toFileIndex,
-    toRankIndex } = node;
-  emit('requestNodeSelected', {
+  const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } = node;
+  emit("requestNodeSelected", {
     nodeIndex: selectedNodeIndex.value,
     fen,
     fromFileIndex,
@@ -163,12 +199,13 @@ function activateNavigationMode() {
 }
 
 function handleClick(nodeIndex) {
-  const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } = nodes.value[nodeIndex];
+  const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } =
+    nodes.value[nodeIndex];
 
   if (!navigationMode.value) return;
   if (!fen) return;
 
-  emit('requestNodeSelected', {
+  emit("requestNodeSelected", {
     nodeIndex,
     fen,
     fromFileIndex,
@@ -182,28 +219,26 @@ function isSelectedNode(nodeIndex) {
   return nodeIndex === selectedNodeIndex.value;
 }
 
-
 function selectNextNode() {
   if (!navigationMode.value) return;
-  for (selectedNodeIndex.value += 1; selectedNodeIndex.value < nodes.value.length; selectedNodeIndex.value++) {
+  for (
+    selectedNodeIndex.value += 1;
+    selectedNodeIndex.value < nodes.value.length;
+    selectedNodeIndex.value++
+  ) {
     const currentNode = nodes.value[selectedNodeIndex.value];
     const isAMoveNode = currentNode.fen;
     if (isAMoveNode) break;
   }
 
   const node = nodes.value[selectedNodeIndex.value];
-  if (!(node?.fen)) {
+  if (!node?.fen) {
     // cancelling progress in history if we point to a number node
     selectPreviousNode();
   }
 
-
-  const { fen,
-    fromFileIndex,
-    fromRankIndex,
-    toFileIndex,
-    toRankIndex } = node;
-  emit('requestNodeSelected', {
+  const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } = node;
+  emit("requestNodeSelected", {
     nodeIndex: selectedNodeIndex.value,
     fen,
     fromFileIndex,
@@ -221,8 +256,6 @@ function setNodes(nodesArray) {
   nodes.value = nodesArray;
 }
 
-
-
 defineExpose({
   reset,
   addNode,
@@ -232,24 +265,36 @@ defineExpose({
   scrollToLastElement,
   activateNavigationMode,
 });
-
 </script>
 
 <template>
   <div class="root">
     <div class="toolbar" v-if="navigationMode">
-      <button @click="selectStartPosition" class="toolbar__button"><img :src="backwardEnd" width="20"
-          height="20" /></button>
-      <button @click="selectPreviousNode" class="toolbar__button"><img :src="backward" width="20"
-          height="20" /></button>
-      <button @click="selectNextNode" class="toolbar__button"><img :src="forward" width="20" height="20" /></button>
-      <button @click="selectLastNode" class="toolbar__button"><img :src="forwardEnd" width="20" height="20" /></button>
+      <button @click="selectStartPosition" class="toolbar__button">
+        <img :src="backwardEnd" width="20" height="20" />
+      </button>
+      <button @click="selectPreviousNode" class="toolbar__button">
+        <img :src="backward" width="20" height="20" />
+      </button>
+      <button @click="selectNextNode" class="toolbar__button">
+        <img :src="forward" width="20" height="20" />
+      </button>
+      <button @click="selectLastNode" class="toolbar__button">
+        <img :src="forwardEnd" width="20" height="20" />
+      </button>
     </div>
     <div class="main-content" ref="mainContent">
-      <span v-for="(node, index) in nodes" :key="index" :class="{ selected: isSelectedNode(index) }"
-        @click="handleClick(index)">
-        {{ `${ node.number ?? ''}&nbsp;` }}{{ `${node.fan ?? ''}&nbsp;` }}
-      </span>
+      <template v-for="(node, index) in nodes" :key="index">
+        <span v-if="node.whiteTurn || (index === 0)">
+          {{ `${node.number ?? ""}&nbsp;` }}
+        </span>
+        <button
+          @click="handleClick(index)"
+          :class="{ selected: isSelectedNode(index) }"
+        >
+          {{ `${node.fan ?? ""}&nbsp;` }}
+      </button>
+      </template>
     </div>
   </div>
 </template>
@@ -289,12 +334,17 @@ defineExpose({
   align-content: flex-start;
   box-sizing: border-box;
   background-color: darkcyan;
-  font-family: 'Free Serif';
+  font-family: "Free Serif";
   font-size: xx-large;
   padding: 0.5rem;
   text-align: start;
   overflow-x: scroll;
   overflow-y: hidden;
+}
+
+.main-content > button {
+  background-color: darkcyan;
+  padding: 0;
 }
 
 .selected {
