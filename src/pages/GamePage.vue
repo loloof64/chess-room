@@ -79,6 +79,23 @@ async function startNewGame() {
   gameStore.setBlackNickname(hostHasWhite ? guestUser : hostUser);
   atLeastAGameStarted.value = true;
   roomStore.setAtLeastAGameStartedStatus(true);
+
+  const startPositionParts = startPosition.split(" ");
+  const moveNumber = parseInt(startPositionParts[5]);
+  const whiteTurn = startPositionParts[1] === "w";
+  history.value.reset(moveNumber, whiteTurn);
+  gameStore.setHistoryNodes(history.value.getNodes());
+
+  gameStore.setLastMoveArrow({
+    start: {
+      file: -Infinity,
+      rank: -Infinity,
+    },
+    end: {
+      file: -Infinity,
+      rank: -Infinity,
+    },
+  });
 }
 
 async function openNewGameOptionsDialog() {
@@ -179,6 +196,28 @@ function toggleBoardOrientation() {
   boardReversed.value = !boardReversed.value;
 }
 
+function handleMoveDone(
+  moveNumber,
+  whiteTurn,
+  moveSan,
+  moveFan,
+  resultingPosition,
+  move
+) {
+  history.value.addNode({
+    number: moveNumber,
+    fan: moveFan,
+    fen: resultingPosition,
+    fromFileIndex: move.start.file,
+    fromRankIndex: move.start.rank,
+    toFileIndex: move.end.file,
+    toRankIndex: move.end.rank,
+  });
+  gameStore.setHistoryNodes(history.value.getNodes());
+  gameStore.setLastMoveArrow(move);
+  currentPosition.value = resultingPosition;
+}
+
 onMounted(() => {
   const roomId = roomStore.roomId;
   if (roomId) {
@@ -209,6 +248,8 @@ onMounted(() => {
   board.value.newGame(currentPosition.value);
   atLeastAGameStarted.value = roomStore.atLeastAGameStarted;
   boardReversed.value = gameStore.boardReversed;
+  history.value.setNodes(gameStore.historyNodes);
+  board.value.setLastMoveArrow(gameStore.lastMoveArrow);
 });
 </script>
 
@@ -223,6 +264,7 @@ onMounted(() => {
         :whitePlayerHuman="whitePlayerIsHuman"
         :blackPlayerHuman="blackPlayerIsHuman"
         :reversed="boardReversed"
+        @moveDone="handleMoveDone"
       />
     </div>
     <div id="miscZone">

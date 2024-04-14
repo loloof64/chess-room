@@ -51,7 +51,9 @@ function reset(startMoveNumber, startsAsWhite) {
  */
 function addNode(parameters) {
   const { number, fan, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } = parameters;
-  nodes.value = [...nodes.value, { number, fan, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex }];
+  // We skip the move number for the first move, as it's already added
+  const realNumber = nodes.value.length > 1 ? number : '';
+  nodes.value = [...nodes.value, { number: realNumber, fan, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex }];
 }
 
 /**
@@ -211,11 +213,21 @@ function selectNextNode() {
   });
 }
 
+function getNodes() {
+  return nodes.value;
+}
+
+function setNodes(nodesArray) {
+  nodes.value = nodesArray;
+}
+
 
 
 defineExpose({
   reset,
   addNode,
+  getNodes,
+  setNodes,
   setSelectedNode,
   scrollToLastElement,
   activateNavigationMode,
@@ -236,7 +248,7 @@ defineExpose({
     <div class="main-content" ref="mainContent">
       <span v-for="(node, index) in nodes" :key="index" :class="{ selected: isSelectedNode(index) }"
         @click="handleClick(index)">
-        {{ `${node.number ?? ''}&nbsp;` }}{{ `${node.fan ?? ''}&nbsp;` }}
+        {{ `${ node.number ?? ''}&nbsp;` }}{{ `${node.fan ?? ''}&nbsp;` }}
       </span>
     </div>
   </div>
@@ -269,7 +281,7 @@ defineExpose({
 
 .main-content {
   width: 100%;
-  height: 3rem;
+  height: 5rem;
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -282,6 +294,7 @@ defineExpose({
   padding: 0.5rem;
   text-align: start;
   overflow-x: scroll;
+  overflow-y: hidden;
 }
 
 .selected {

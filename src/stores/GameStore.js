@@ -17,18 +17,20 @@ export const useGameStore = defineStore("GameStore", {
         "GameStore$blackPlayerIsHuman",
         false
       ),
-      whiteNickname: useSessionStorage(
-        "GameStore$whiteNickname",
-        ""
-      ),
-      blackNickname: useSessionStorage(
-        "GameStore$blackNickname",
-        ""
-      ),
-      boardReversed: useSessionStorage(
-        "GameStore$boardReversed",
-        false,
-      )
+      whiteNickname: useSessionStorage("GameStore$whiteNickname", ""),
+      blackNickname: useSessionStorage("GameStore$blackNickname", ""),
+      boardReversed: useSessionStorage("GameStore$boardReversed", false),
+      historyNodes: useSessionStorage("GameStore$historyNodes", []),
+      lastMoveArrow: useSessionStorage("GameStore$lastMoveArrow", {
+        start: {
+          file: -Infinity,
+          rank: -Infinity,
+        },
+        end: {
+          file: -Infinity,
+          rank: -Infinity,
+        },
+      }),
     };
   },
   actions: {
@@ -49,6 +51,12 @@ export const useGameStore = defineStore("GameStore", {
     },
     setBoardReversedStatus(newStatus) {
       this.boardReversed = newStatus;
+    },
+    setHistoryNodes(newArray) {
+      this.historyNodes = newArray;
+    },
+    setLastMoveArrow(moveCoordinates) {
+      this.lastMoveArrow = moveCoordinates;
     }
   },
   persist: sessionStorage,
