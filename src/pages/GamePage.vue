@@ -45,6 +45,7 @@ const {
 } = storeToRefs(gameStore);
 
 import { client, databaseId, collectionId } from "@/lib/appwrite.js";
+import { Chess } from "chess.js";
 const unsubscribeCheckNewGameStarted = ref();
 
 function resizeBoard() {
@@ -214,7 +215,7 @@ onMounted(() => {
 <template>
   <div id="pageRoot">
     <div id="gameZone">
-      <chess-history ref="history" />
+      <ChessHistory ref="history" />
       <ChessboardVue
         id="board"
         ref="board"
