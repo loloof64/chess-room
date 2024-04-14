@@ -175,7 +175,7 @@ function handleEventInDb(response) {
 }
 
 function toggleBoardOrientation() {
-  boardReversed.value = ! boardReversed.value;
+  boardReversed.value = !boardReversed.value;
 }
 
 onMounted(() => {
@@ -227,9 +227,7 @@ onMounted(() => {
     <div id="miscZone">
       <!-- buttons -->
       <div id="buttons">
-        <button
-          @click="toggleBoardOrientation"
-        >
+        <button @click="toggleBoardOrientation">
           <img :src="reverse" />
         </button>
         <button
@@ -260,10 +258,12 @@ onMounted(() => {
 <style scoped>
 #pageRoot {
   display: flex;
-  height: 80vh;
+  width: 100%;
+  height: 100%;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 #gameZone {
