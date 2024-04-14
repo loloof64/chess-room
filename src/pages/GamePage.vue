@@ -218,7 +218,7 @@ onMounted(() => {
       <ChessboardVue
         id="board"
         ref="board"
-        size="300"
+        :size="boardSize"
         :whitePlayerHuman="whitePlayerIsHuman"
         :blackPlayerHuman="blackPlayerIsHuman"
         :reversed="boardReversed"
