@@ -45,6 +45,8 @@ const {
   weHaveWhite,
 } = storeToRefs(gameStore);
 
+const whiteTurn = computed(() => currentPosition.value.split(' ')[1] === 'w');
+
 import { client, databaseId, collectionId } from "@/lib/appwrite.js";
 const unsubscribeCheckNewGameStarted = ref();
 
@@ -477,14 +479,14 @@ onMounted(() => {
       </div>
       <!-- buttons -->
       <table id="nicknames" v-if="atLeastAGameStarted">
-        <tr class="nickname">
+        <tr class="nickname" :class="[whiteTurn ? 'highlight' : '']">
           <td><div class="color white" /></td>
           <td>
             <p>{{ whiteNickname }}</p>
           </td>
           <td><img :src="user" v-if="weHaveWhite === true" /></td>
         </tr>
-        <tr class="nickname">
+        <tr class="nickname" :class="[whiteTurn ? '' : 'highlight']">
           <td><div class="color black" /></td>
           <td>
             <p>{{ blackNickname }}</p>
@@ -556,6 +558,10 @@ onMounted(() => {
   justify-content: flex-start;
   align-items: center;
   margin: 2px;
+}
+
+.nickname.highlight {
+  background-color: coral;
 }
 
 .nickname > td:nth-child(1) {
