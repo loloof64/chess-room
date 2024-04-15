@@ -183,7 +183,8 @@ function selectLastNode() {
     selectPreviousNode();
   }
 
-  const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } = node;
+  const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } =
+    nodes.value[selectedNodeIndex.value];
   emit("requestNodeSelected", {
     nodeIndex: selectedNodeIndex.value,
     fen,
@@ -347,12 +348,11 @@ defineExpose({
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
-  flex-wrap: wrap;
   align-content: flex-start;
   box-sizing: border-box;
   background-color: darkcyan;
   font-family: "Free Serif";
-  font-size: xx-large;
+  font-size: x-large;
   padding: 0.5rem;
   text-align: start;
   overflow-x: scroll;
@@ -362,6 +362,7 @@ defineExpose({
 .main-content > button {
   background-color: darkcyan;
   padding: 0;
+  text-wrap: nowrap;
 }
 
 .selected {

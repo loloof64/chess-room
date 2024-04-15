@@ -39,6 +39,7 @@ const boardReversed = ref(false);
 
 const atLeastAGameStarted = ref(false);
 
+const boardSizePx = computed(() => boardSize.value + 'px')
 const weAreHost = computed(() => roomStore.roomOwner === true);
 const gameStarted = computed(() => roomStore.gameStarted === true);
 const {
@@ -82,7 +83,7 @@ function resizeBoard() {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  boardSize.value = `${minSize * 0.88}`;
+  boardSize.value = `${minSize * 0.80}`;
 }
 
 async function startNewGame() {
@@ -174,7 +175,9 @@ async function openGiveUpGameDialog() {
     roomStore.setGameStartedStatus(false);
     gameStore.setWhitePlayerIsHuman(false);
     gameStore.setBlackPlayerIsHuman(false);
+
     updatePgnLogic();
+    history.value.activateNavigationMode();
   }
 }
 
@@ -257,6 +260,7 @@ function handleEventInDb(response) {
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
         updatePgnLogic();
+        history.value.activateNavigationMode();
         notify({
           text: t("pages.game.outcomes.gaveUp"),
         });
@@ -336,6 +340,7 @@ async function handleCheckmate(byWhite) {
   }
 
   updatePgnLogic();
+  history.value.activateNavigationMode();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.checkmate");
@@ -362,6 +367,7 @@ async function handleStalemate() {
   }
 
   updatePgnLogic();
+  history.value.activateNavigationMode();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.stalemate");
@@ -388,6 +394,7 @@ async function handlePerpetualDraw() {
   }
 
   updatePgnLogic();
+  history.value.activateNavigationMode();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.perpetualDraw");
@@ -414,6 +421,7 @@ async function handleMissingMaterial() {
   }
 
   updatePgnLogic();
+  history.value.activateNavigationMode();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.missingMaterial");
@@ -440,6 +448,7 @@ async function handleFiftyMovesDraw() {
   }
 
   updatePgnLogic();
+  history.value.activateNavigationMode();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.fiftyMovesDraw");
@@ -497,6 +506,7 @@ onMounted(() => {
 
   if (!gameStarted.value) {
     updatePgnLogic();
+    history.value.activateNavigationMode();
   }
 });
 </script>
@@ -575,6 +585,7 @@ onMounted(() => {
 }
 
 #gameZone {
+  width: v-bind(boardSizePx);
   display: flex;
   flex-direction: column;
   justify-content: start;
