@@ -17,6 +17,7 @@ export const useGameStore = defineStore("GameStore", {
         "GameStore$blackPlayerIsHuman",
         false
       ),
+      weHaveWhite: useSessionStorage("GameStore$weHaveWhite", undefined),
       whiteNickname: useSessionStorage("GameStore$whiteNickname", ""),
       blackNickname: useSessionStorage("GameStore$blackNickname", ""),
       boardReversed: useSessionStorage("GameStore$boardReversed", false),
@@ -42,6 +43,9 @@ export const useGameStore = defineStore("GameStore", {
     },
     setBlackPlayerIsHuman(newStatus) {
       this.blackPlayerIsHuman = newStatus;
+    },
+    setWeHaveWhiteStatus(newStatus) {
+      this.weHaveWhite = newStatus;
     },
     setWhiteNickname(newName) {
       this.whiteNickname = newName;

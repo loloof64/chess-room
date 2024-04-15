@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { notify } from "@kyvg/vue3-notification";
-import {sleep} from '../utils';
+import { sleep } from "../utils";
 
 import { noGiveUp, hostGaveUp, guestGaveUp } from "@/constants.js";
 import ChessHistory from "@/components/ChessHistory.vue";
@@ -10,6 +10,7 @@ import ChessHistory from "@/components/ChessHistory.vue";
 import start from "@/assets/images/start.svg";
 import stop from "@/assets/images/stop.svg";
 import reverse from "@/assets/images/reverse.svg";
+import user from "@/assets/images/user.svg";
 
 import NewGameDialog from "@/components/dialogs/NewGameDialog.vue";
 import GiveUpGameDialog from "@/components/dialogs/GiveUpGameDialog.vue";
@@ -41,6 +42,7 @@ const {
   blackPlayerIsHuman,
   whiteNickname,
   blackNickname,
+  weHaveWhite,
 } = storeToRefs(gameStore);
 
 import { client, databaseId, collectionId } from "@/lib/appwrite.js";
@@ -51,7 +53,7 @@ function resizeBoard() {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  boardSize.value = `${minSize * 0.9}`;
+  boardSize.value = `${minSize * 0.88}`;
 }
 
 async function startNewGame() {
@@ -77,6 +79,7 @@ async function startNewGame() {
   const weHaveWhite =
     (hostPlaysWithWhiteSide && weAreHost.value) ||
     (!hostPlaysWithWhiteSide && !weAreHost.value);
+  gameStore.setWeHaveWhiteStatus(weHaveWhite);
   gameStore.setWhitePlayerIsHuman(weHaveWhite);
   gameStore.setBlackPlayerIsHuman(!weHaveWhite);
   gameStore.setWhiteNickname(hostHasWhite ? hostUser : guestUser);
@@ -473,16 +476,22 @@ onMounted(() => {
         </button>
       </div>
       <!-- buttons -->
-      <div id="nicknames" v-if="atLeastAGameStarted">
-        <div class="nickname">
-          <div class="color white" />
-          <p>{{ whiteNickname }}</p>
-        </div>
-        <div class="nickname">
-          <div class="color black" />
-          <p>{{ blackNickname }}</p>
-        </div>
-      </div>
+      <table id="nicknames" v-if="atLeastAGameStarted">
+        <tr class="nickname">
+          <td><div class="color white" /></td>
+          <td>
+            <p>{{ whiteNickname }}</p>
+          </td>
+          <td><img :src="user" v-if="weHaveWhite === true" /></td>
+        </tr>
+        <tr class="nickname">
+          <td><div class="color black" /></td>
+          <td>
+            <p>{{ blackNickname }}</p>
+          </td>
+          <td><img :src="user" v-if="weHaveWhite === false" /></td>
+        </tr>
+      </table>
     </div>
   </div>
 </template>
@@ -549,7 +558,19 @@ onMounted(() => {
   margin: 2px;
 }
 
-.nickname > .color {
+.nickname > td:nth-child(1) {
+  width: 6vw;
+}
+
+.nickname > td:nth-child(2) {
+  width: 12vw;
+}
+
+.nickname > td:nth-child(3) {
+  width: 3vw;
+}
+
+.nickname > td > .color {
   width: 3vw;
   margin: 0 8px;
   height: 3vw;
@@ -557,18 +578,23 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.nickname > .color.white {
+.nickname > td > .color.white {
   background-color: white;
 }
 
-.nickname > .color.black {
+.nickname > td > .color.black {
   background-color: black;
 }
 
-.nickname > p {
+.nickname > td > p {
   font-family: "Courier New", Courier, monospace;
   font-weight: bold;
   font-size: large;
+}
+
+.nickname > td > img {
+  width: 3vw;
+  height: 3vw;
 }
 
 @media (max-width: 1000px) {
