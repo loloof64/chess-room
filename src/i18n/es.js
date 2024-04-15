@@ -60,6 +60,11 @@ export default {
     game: {
       outcomes: {
         gaveUp: "Partida abandonada por su oponente.",
+        checkmate: "¡Jaque mate!",
+        stalemate: "¡Empate!",
+        perpetualDraw: "¡Igualdad por repetición triple!",
+        missingMaterial: "¡Igualdad con el material que falta!",
+        fiftyMovesDraw: "¡Igualdad según la regla de los 50 movimientos!",
       },
     },
     generic: {

@@ -60,6 +60,11 @@ export default {
     game: {
       outcomes: {
         gaveUp: "Game gave up by your opponent.",
+        checkmate: "Checkmate !",
+        stalemate: "Stalemate !",
+        perpetualDraw: "Draw by three-fold repetition !",
+        missingMaterial: "Draw by missing material !",
+        fiftyMovesDraw: "Draw by the 50 moves rule !",
       },
     },
     generic: {

@@ -60,6 +60,11 @@ export default {
     game: {
       outcomes: {
         gaveUp: "Partie abandonnée par votre adversaire.",
+        checkmate: "Échec et mat !",
+        stalemate: "Pat !",
+        perpetualDraw: "Nulle par triple répétition !",
+        missingMaterial: "Nulle par manque de matériel !",
+        fiftyMovesDraw: "Nulle par la règle des 50 coups !",
       },
     },
     generic: {

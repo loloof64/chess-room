@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { notify } from "@kyvg/vue3-notification";
+import {sleep} from '../utils';
 
 import { noGiveUp, hostGaveUp, guestGaveUp } from "@/constants.js";
 import ChessHistory from "@/components/ChessHistory.vue";
@@ -32,10 +33,8 @@ const boardReversed = ref(false);
 
 const atLeastAGameStarted = ref(false);
 
-const weAreHost = computed(() => ["true", true].includes(roomStore.roomOwner));
-const gameStarted = computed(() =>
-  ["true", true].includes(roomStore.gameStarted)
-);
+const weAreHost = computed(() => roomStore.roomOwner === true);
+const gameStarted = computed(() => roomStore.gameStarted === true);
 const {
   currentPosition,
   whitePlayerIsHuman,
@@ -215,10 +214,10 @@ function handleEventInDb(response) {
     // !gameHasStarted
     else {
       const giveUpSide = payload.giveUpSide;
-      const weDidNotInitiateGiveUp = weAreHost.value
-        ? giveUpSide !== hostGaveUp
-        : giveUpSide !== guestGaveUp;
-      if (weDidNotInitiateGiveUp) {
+      const otherPeerInitiatedGiveUp = weAreHost.value
+        ? giveUpSide >= guestGaveUp
+        : giveUpSide <= hostGaveUp;
+      if (otherPeerInitiatedGiveUp) {
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
@@ -282,6 +281,126 @@ async function handleMoveDone(
   }
 }
 
+async function handleCheckmate(byWhite) {
+  if (!gameStarted.value) return;
+
+  // let the board and interface update
+  await sleep(50);
+
+  const newValues = {
+    gameStarted: false,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+
+  if (hasError) {
+    console.error(result.error);
+  }
+
+  roomStore.setGameStartedStatus(false);
+  const message = t("pages.game.outcomes.checkmate");
+  notify({
+    text: message,
+  });
+}
+
+async function handleStalemate() {
+  if (!gameStarted.value) return;
+
+  // let the board and interface update
+  await sleep(50);
+
+  const newValues = {
+    gameStarted: false,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+
+  if (hasError) {
+    console.error(result.error);
+  }
+
+  roomStore.setGameStartedStatus(false);
+  const message = t("pages.game.outcomes.stalemate");
+  notify({
+    text: message,
+  });
+}
+
+async function handlePerpetualDraw() {
+  if (!gameStarted.value) return;
+
+  // let the board and interface update
+  await sleep(50);
+
+  const newValues = {
+    gameStarted: false,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+
+  if (hasError) {
+    console.error(result.error);
+  }
+
+  roomStore.setGameStartedStatus(false);
+  const message = t("pages.game.outcomes.perpetualDraw");
+  notify({
+    text: message,
+  });
+}
+
+async function handleMissingMaterial() {
+  if (!gameStarted.value) return;
+
+  // let the board and interface update
+  await sleep(50);
+
+  const newValues = {
+    gameStarted: false,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+
+  if (hasError) {
+    console.error(result.error);
+  }
+
+  roomStore.setGameStartedStatus(false);
+  const message = t("pages.game.outcomes.missingMaterial");
+  notify({
+    text: message,
+  });
+}
+
+async function handleFiftyMovesDraw() {
+  if (!gameStarted.value) return;
+
+  // let the board and interface update
+  await sleep(50);
+
+  const newValues = {
+    gameStarted: false,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+
+  if (hasError) {
+    console.error(result.error);
+  }
+
+  roomStore.setGameStartedStatus(false);
+  const message = t("pages.game.outcomes.fiftyMovesDraw");
+  notify({
+    text: message,
+  });
+}
+
 onMounted(() => {
   const roomId = roomStore.roomId;
   if (roomId) {
@@ -330,6 +449,11 @@ onMounted(() => {
         :blackPlayerHuman="blackPlayerIsHuman"
         :reversed="boardReversed"
         @moveDone="handleMoveDone"
+        @checkmate="handleCheckmate"
+        @stalemate="handleStalemate"
+        @perpetualDraw="handlePerpetualDraw"
+        @missingMaterialDraw="handleMissingMaterial"
+        @fiftyMovesDraw="handleFiftyMovesDraw"
       />
     </div>
     <div id="miscZone">

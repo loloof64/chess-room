@@ -61,7 +61,7 @@ export const useGameStore = defineStore("GameStore", {
     },
     setLastMoveArrow(moveCoordinates) {
       this.lastMoveArrow = moveCoordinates;
-    }
+    },
   },
   persist: sessionStorage,
 });
