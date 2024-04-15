@@ -39,7 +39,8 @@ function reset(startMoveNumber, startsAsWhite) {
 }
 
 /**
- * Add a node to history. You give an object with
+ * Add a node to history, or complete the first one if no data other that move number given yet.
+ * You give an object with
  * @param number: String? (can be undefined) - the move number text
  * @param fan: String? (can be undefined) - the move text without the number ands with chess symbols as Unicode
  * @param fen: String? (can be undefined) - the position value resulting from move in Forstyh-Edwards Notation
@@ -50,7 +51,7 @@ function reset(startMoveNumber, startsAsWhite) {
  * @param whiteTurn: Boolean? (can be undefined) - is it white turn ?
  *
  */
-function addNode(parameters) {
+function addNodeOrCompleteFirst(parameters) {
   const {
     number,
     fan,
@@ -62,7 +63,7 @@ function addNode(parameters) {
     whiteTurn,
   } = parameters;
   // We append data for the first move, as it's already added, if he has not any relevant data yet.
-  if (nodes.value.length === 1 && !(nodes.value[0].fan)) {
+  if (nodes.value.length === 1 && !nodes.value[0].fan) {
     const oldValue = nodes.value[0];
     const newValue = {
       ...oldValue,
@@ -74,6 +75,7 @@ function addNode(parameters) {
       toRankIndex,
       whiteTurn,
     };
+    // Clones the array instead of getting reference
     nodes.value[0] = newValue;
   } else {
     const numberString = `${number}.${whiteTurn === true ? "" : ".."}`;
@@ -249,21 +251,32 @@ function selectNextNode() {
 }
 
 function getNodes() {
-  return nodes.value;
+  // Clone the array instead of getting reference
+  return nodes.value.map((e) => e);
 }
 
 function setNodes(nodesArray) {
   nodes.value = nodesArray;
 }
 
+function getLastNode() {
+  return nodes.value[nodes.value.findLastIndex((e) => true)];
+}
+
+function getNodesCount() {
+  return nodes.value.length;
+}
+
 defineExpose({
   reset,
-  addNode,
+  addNodeOrCompleteFirst,
   getNodes,
   setNodes,
   setSelectedNode,
   scrollToLastElement,
   activateNavigationMode,
+  getLastNode,
+  getNodesCount,
 });
 </script>
 
@@ -285,7 +298,7 @@ defineExpose({
     </div>
     <div class="main-content" ref="mainContent">
       <template v-for="(node, index) in nodes" :key="index">
-        <span v-if="node.whiteTurn || (index === 0)">
+        <span v-if="node.whiteTurn || index === 0">
           {{ `${node.number ?? ""}&nbsp;` }}
         </span>
         <button
@@ -293,7 +306,7 @@ defineExpose({
           :class="{ selected: isSelectedNode(index) }"
         >
           {{ `${node.fan ?? ""}&nbsp;` }}
-      </button>
+        </button>
       </template>
     </div>
   </div>

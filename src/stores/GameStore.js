@@ -53,7 +53,11 @@ export const useGameStore = defineStore("GameStore", {
       this.boardReversed = newStatus;
     },
     setHistoryNodes(newArray) {
-      this.historyNodes = newArray;
+      // Clones the given array instead of getting references 
+      this.historyNodes = newArray.map(e => e);
+    },
+    addHistoryNode(nodeToAdd) {
+      this.historyNodes.push(nodeToAdd);
     },
     setLastMoveArrow(moveCoordinates) {
       this.lastMoveArrow = moveCoordinates;

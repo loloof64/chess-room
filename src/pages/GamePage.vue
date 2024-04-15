@@ -243,7 +243,7 @@ async function handleMoveDone(
   move,
   promotion
 ) {
-  history.value.addNode({
+  history.value.addNodeOrCompleteFirst({
     number: moveNumber,
     whiteTurn,
     fan: moveFan,
@@ -253,7 +253,13 @@ async function handleMoveDone(
     toFileIndex: move.end.file,
     toRankIndex: move.end.rank,
   });
-  gameStore.setHistoryNodes(history.value.getNodes());
+  const historyNodesCount = history.value.getNodesCount();
+  const lastHistoryNode = history.value.getLastNode;
+  if (historyNodesCount > 1 && lastHistoryNode.fan) {
+    gameStore.addHistoryNode(history.value.getLastNode());
+  } else {
+    gameStore.setHistoryNodes(history.value.getNodes());
+  }
   gameStore.setLastMoveArrow(move);
   currentPosition.value = resultingPosition;
 
@@ -306,6 +312,7 @@ onMounted(() => {
   board.value.newGame(currentPosition.value);
   atLeastAGameStarted.value = roomStore.atLeastAGameStarted;
   boardReversed.value = gameStore.boardReversed;
+
   history.value.setNodes(gameStore.historyNodes);
   board.value.setLastMoveArrow(gameStore.lastMoveArrow);
 });
