@@ -5,6 +5,10 @@ import { emptyPosition } from "@/constants";
 export const useGameStore = defineStore("GameStore", {
   state: () => {
     return {
+      startPosition: useSessionStorage(
+        "GameStore$startPosition",
+        emptyPosition
+      ),
       currentPosition: useSessionStorage(
         "GameStore$currentPosition",
         emptyPosition
@@ -65,6 +69,9 @@ export const useGameStore = defineStore("GameStore", {
     },
     setLastMoveArrow(moveCoordinates) {
       this.lastMoveArrow = moveCoordinates;
+    },
+    setStartPosition(newPosition) {
+      this.startPosition = newPosition;
     },
   },
   persist: sessionStorage,

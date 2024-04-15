@@ -41,3 +41,4 @@ Some images have been downloaded from [SvgRepo](https://www.svgrepo.com).
 * stop : https://www.svgrepo.com/svg/411306/stop
 * reverse: https://www.svgrepo.com/svg/414907/arrows-vertical-direction
 * user: https://www.svgrepo.com/svg/467432/user-6
+* save: https://www.svgrepo.com/svg/395640/save

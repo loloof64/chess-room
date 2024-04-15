@@ -43,6 +43,7 @@ function reset(startMoveNumber, startsAsWhite) {
  * You give an object with
  * @param number: String? (can be undefined) - the move number text
  * @param fan: String? (can be undefined) - the move text without the number ands with chess symbols as Unicode
+ * @param san: String? (can be undefined) - the move text without in Short Notation
  * @param fen: String? (can be undefined) - the position value resulting from move in Forstyh-Edwards Notation
  * @param fromFileIndex: Number? (can be undefined) - the start file index of the move
  * @param fromRankIndex: Number? (can be undefined) - the start rank index of the move
@@ -55,6 +56,7 @@ function addNodeOrCompleteFirst(parameters) {
   const {
     number,
     fan,
+    san,
     fen,
     fromFileIndex,
     fromRankIndex,
@@ -68,6 +70,7 @@ function addNodeOrCompleteFirst(parameters) {
     const newValue = {
       ...oldValue,
       fan,
+      san,
       fen,
       fromFileIndex,
       fromRankIndex,
@@ -84,6 +87,7 @@ function addNodeOrCompleteFirst(parameters) {
       {
         number: numberString,
         fan,
+        san,
         fen,
         fromFileIndex,
         fromRankIndex,

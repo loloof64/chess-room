@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { notify } from "@kyvg/vue3-notification";
 import { sleep } from "../utils";
+import { Chess } from "chess.js";
+import { format } from "date-fns";
 
 import { noGiveUp, hostGaveUp, guestGaveUp } from "@/constants.js";
 import ChessHistory from "@/components/ChessHistory.vue";
@@ -11,6 +13,7 @@ import start from "@/assets/images/start.svg";
 import stop from "@/assets/images/stop.svg";
 import reverse from "@/assets/images/reverse.svg";
 import user from "@/assets/images/user.svg";
+import save from "@/assets/images/save.svg";
 
 import NewGameDialog from "@/components/dialogs/NewGameDialog.vue";
 import GiveUpGameDialog from "@/components/dialogs/GiveUpGameDialog.vue";
@@ -27,6 +30,8 @@ const { t } = useI18n();
 const roomStore = useRoomStore();
 const gameStore = useGameStore();
 
+let pgnLogic = new Chess();
+
 const boardSize = ref("100");
 const board = ref();
 const history = ref();
@@ -37,6 +42,7 @@ const atLeastAGameStarted = ref(false);
 const weAreHost = computed(() => roomStore.roomOwner === true);
 const gameStarted = computed(() => roomStore.gameStarted === true);
 const {
+  startPosition,
   currentPosition,
   whitePlayerIsHuman,
   blackPlayerIsHuman,
@@ -45,10 +51,31 @@ const {
   weHaveWhite,
 } = storeToRefs(gameStore);
 
-const whiteTurn = computed(() => currentPosition.value.split(' ')[1] === 'w');
+const whiteTurn = computed(() => currentPosition.value.split(" ")[1] === "w");
 
 import { client, databaseId, collectionId } from "@/lib/appwrite.js";
 const unsubscribeCheckNewGameStarted = ref();
+
+function updatePgnLogic() {
+  pgnLogic = new Chess(startPosition.value);
+  const historyNodes = history.value.getNodes();
+  const dateString = format(new Date(), "yyyy.MM.dd");
+  for (let currentNode of historyNodes) {
+    try {
+      pgnLogic.move(currentNode.san);
+    } catch (e) {
+      console.log(`Failed to play ${currentNode.san} in pgn history`);
+    }
+  }
+  pgnLogic.header(
+    "White",
+    whiteNickname.value,
+    "Black",
+    blackNickname.value,
+    "Date",
+    dateString
+  );
+}
 
 function resizeBoard() {
   const minSize =
@@ -74,7 +101,7 @@ async function startNewGame() {
   history.value.reset(moveNumber, whiteTurn);
   gameStore.setHistoryNodes(history.value.getNodes());
 
-  roomStore.setStartPosition(startPosition);
+  gameStore.setStartPosition(startPosition);
   board.value.newGame(startPosition);
   gameStore.setCurrentPosition(startPosition);
   const hostPlaysWithWhiteSide = [true, "true"].includes(hostHasWhite);
@@ -119,7 +146,7 @@ async function openNewGameOptionsDialog() {
       return;
     }
     roomStore.setGameStartedStatus(true);
-    roomStore.setStartPosition(startPosition);
+    gameStore.setStartPosition(startPosition);
     const weAreHost = roomStore.roomOwner;
     const boardShouldBeReversed =
       (withWhiteSide && !weAreHost) || (!withWhiteSide && weAreHost);
@@ -147,6 +174,7 @@ async function openGiveUpGameDialog() {
     roomStore.setGameStartedStatus(false);
     gameStore.setWhitePlayerIsHuman(false);
     gameStore.setBlackPlayerIsHuman(false);
+    updatePgnLogic();
   }
 }
 
@@ -199,8 +227,10 @@ function handleEventInDb(response) {
         })
       );
       if (!success) {
+        /*
         console.log(`Illegal move ${payload.lastMoveSan}`);
         console.log(`Board position is ${board.value.getCurrentPosition()}`);
+        */
         return;
       }
       gameStore.setLastMoveArrow({
@@ -226,6 +256,7 @@ function handleEventInDb(response) {
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
+        updatePgnLogic();
         notify({
           text: t("pages.game.outcomes.gaveUp"),
         });
@@ -250,6 +281,7 @@ async function handleMoveDone(
   history.value.addNodeOrCompleteFirst({
     number: moveNumber,
     whiteTurn,
+    san: moveSan,
     fan: moveFan,
     fen: resultingPosition,
     fromFileIndex: move.start.file,
@@ -303,6 +335,8 @@ async function handleCheckmate(byWhite) {
     console.error(result.error);
   }
 
+  updatePgnLogic();
+
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.checkmate");
   notify({
@@ -326,6 +360,8 @@ async function handleStalemate() {
   if (hasError) {
     console.error(result.error);
   }
+
+  updatePgnLogic();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.stalemate");
@@ -351,6 +387,8 @@ async function handlePerpetualDraw() {
     console.error(result.error);
   }
 
+  updatePgnLogic();
+
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.perpetualDraw");
   notify({
@@ -374,6 +412,8 @@ async function handleMissingMaterial() {
   if (hasError) {
     console.error(result.error);
   }
+
+  updatePgnLogic();
 
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.missingMaterial");
@@ -399,11 +439,26 @@ async function handleFiftyMovesDraw() {
     console.error(result.error);
   }
 
+  updatePgnLogic();
+
   roomStore.setGameStartedStatus(false);
   const message = t("pages.game.outcomes.fiftyMovesDraw");
   notify({
     text: message,
   });
+}
+
+async function purposeSavePgn() {
+  const accepted = confirm(t("pages.pgn.confirmationMessage"));
+  if (accepted) {
+    const content = pgnLogic.pgn({ newline: "\n", maxWidth: 80 });
+    const link = document.createElement("a");
+    const file = new Blob([content], { type: "text/plain" });
+    link.href = URL.createObjectURL(file);
+    link.download = "game.pgn";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
 }
 
 onMounted(() => {
@@ -439,6 +494,10 @@ onMounted(() => {
 
   history.value.setNodes(gameStore.historyNodes);
   board.value.setLastMoveArrow(gameStore.lastMoveArrow);
+
+  if (!gameStarted.value) {
+    updatePgnLogic();
+  }
 });
 </script>
 
@@ -475,6 +534,12 @@ onMounted(() => {
         </button>
         <button v-if="gameStarted" @click="openGiveUpGameDialog">
           <img :src="stop" />
+        </button>
+        <button
+          v-if="atLeastAGameStarted && !gameStarted"
+          @click="purposeSavePgn"
+        >
+          <img :src="save" />
         </button>
       </div>
       <!-- buttons -->

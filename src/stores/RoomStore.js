@@ -13,10 +13,6 @@ export const useRoomStore = defineStore("RoomStore", {
         "RoomStore$atLeastAGameStarted",
         false
       ),
-      startPosition: useSessionStorage(
-        "RoomStore$startPosition",
-        emptyPosition
-      ),
     };
   },
   actions: {
@@ -40,9 +36,6 @@ export const useRoomStore = defineStore("RoomStore", {
     },
     setAtLeastAGameStartedStatus(newStatus) {
       this.atLeastAGameStarted = newStatus;
-    },
-    setStartPosition(newPosition) {
-      this.startPosition = newPosition;
     },
   },
   persist: sessionStorage,

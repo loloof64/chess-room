@@ -67,6 +67,9 @@ export default {
         fiftyMovesDraw: "Draw by the 50 moves rule !",
       },
     },
+    pgn: {
+      confirmationMessage: "Download the generated PGN file ?",
+    },
     generic: {
       errors: {
         failedUpdatingRoom: "Failed to update room in database !",

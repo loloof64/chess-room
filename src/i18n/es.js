@@ -67,6 +67,9 @@ export default {
         fiftyMovesDraw: "¡Igualdad según la regla de los 50 movimientos!",
       },
     },
+    pgn: {
+      confirmationMessage: "¿Descargar el archivo PGN generado?",
+    },
     generic: {
       errors: {
         failedUpdatingRoom:

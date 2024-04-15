@@ -67,6 +67,9 @@ export default {
         fiftyMovesDraw: "Nulle par la règle des 50 coups !",
       },
     },
+    pgn: {
+      confirmationMessage: "Télécharger le fichier PGN généré ?",
+    },
     generic: {
       errors: {
         failedUpdatingRoom:
