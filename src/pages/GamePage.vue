@@ -39,7 +39,7 @@ const boardReversed = ref(false);
 
 const atLeastAGameStarted = ref(false);
 
-const boardSizePx = computed(() => boardSize.value + 'px')
+const boardSizePx = computed(() => boardSize.value + "px");
 const weAreHost = computed(() => roomStore.roomOwner === true);
 const gameStarted = computed(() => roomStore.gameStarted === true);
 const {
@@ -83,7 +83,7 @@ function resizeBoard() {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  boardSize.value = `${minSize * 0.80}`;
+  boardSize.value = `${minSize * 0.8}`;
 }
 
 async function startNewGame() {
@@ -173,6 +173,7 @@ async function openGiveUpGameDialog() {
       return;
     }
     roomStore.setGameStartedStatus(false);
+    board.value.stop();
     gameStore.setWhitePlayerIsHuman(false);
     gameStore.setBlackPlayerIsHuman(false);
 
@@ -470,6 +471,42 @@ async function purposeSavePgn() {
   }
 }
 
+function handleRequestStartPosition() {
+  if (!gameStarted.value) {
+    const success = board.value.setPositionAndLastMove(startPosition.value, {
+      start: {
+        file: -100,
+        rank: -100,
+      },
+      end: {
+        file: -100,
+        rank: -100,
+      },
+    });
+    if (success) {
+      history.value.setSelectedNode(-1);
+    }
+  }
+}
+
+function handleRequestPosition({nodeIndex, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex}) {
+  if (!gameStarted.value) {
+    const success = board.value.setPositionAndLastMove(fen, {
+      start: {
+        file: fromFileIndex,
+        rank: fromRankIndex,
+      },
+      end: {
+        file: toFileIndex,
+        rank: toRankIndex,
+      },
+    });
+    if (success) {
+      history.value.setSelectedNode(-1);
+    }
+  }
+}
+
 onMounted(() => {
   const roomId = roomStore.roomId;
   if (roomId) {
@@ -498,6 +535,9 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   board.value.newGame(currentPosition.value);
+  if (!gameStarted.value) {
+    board.value.stop();
+  }
   atLeastAGameStarted.value = roomStore.atLeastAGameStarted;
   boardReversed.value = gameStore.boardReversed;
 
@@ -514,7 +554,11 @@ onMounted(() => {
 <template>
   <div id="pageRoot">
     <div id="gameZone">
-      <ChessHistory ref="history" />
+      <ChessHistory
+        ref="history"
+        @requestStartPosition="handleRequestStartPosition"
+        @requestNodeSelected="handleRequestPosition"
+      />
       <ChessboardVue
         id="board"
         ref="board"

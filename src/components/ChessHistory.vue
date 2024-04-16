@@ -130,14 +130,9 @@ function requestStartPositionOnBoard() {
   emit("requestStartPosition");
 }
 
-function scrollToTop() {
-  mainContent.value.scroll(0, 0);
-}
-
 function selectStartPosition() {
   if (!navigationMode.value) return;
   requestStartPositionOnBoard();
-  scrollToTop();
 }
 
 function selectPreviousNode() {
@@ -151,6 +146,7 @@ function selectPreviousNode() {
     const isAMoveNode = currentNode.fen;
     if (isAMoveNode) break;
   }
+
 
   if (selectedNodeIndex.value >= 0) {
     const node = nodes.value[selectedNodeIndex.value];
@@ -178,9 +174,11 @@ function selectLastNode() {
   ) {}
 
   const node = nodes.value[selectedNodeIndex.value];
+
   if (!node?.fen) {
     // cancelling progress in history if we point to a number node
     selectPreviousNode();
+    return;
   }
 
   const { fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex } =
