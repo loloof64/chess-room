@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { sleep } from "../utils";
 
 import backwardEnd from "@/assets/images/backward_end.svg";
 import backward from "@/assets/images/backward.svg";
@@ -113,17 +114,18 @@ function scrollToLastElement() {
  * - scrolls to it
  * @param {Number} nodeIndex
  */
-function setSelectedNode(nodeIndex) {
+async function setSelectedNode(nodeIndex) {
   // Needing to be sure that clicking on next move will point to first move node.
   if (nodeIndex < 0) nodeIndex = -1;
   selectedNodeIndex.value = nodeIndex;
   if (nodeIndex > 0) {
-    const targetChild = document.querySelector(
-      `.main-content > *:nth-child(${nodeIndex + 1})`
-    );
+    await sleep(50);
+    const targetChild = document.querySelector(`.main-content > .selected`);
     if (targetChild) {
       targetChild.scrollIntoView();
     }
+  } else {
+    document.querySelector(".main-content").scrollTo(0, 0);
   }
 }
 
