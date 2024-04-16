@@ -293,6 +293,8 @@ async function handleMoveDone(
     toFileIndex: move.end.file,
     toRankIndex: move.end.rank,
   });
+  await sleep(10);
+  history.value.scrollToLastElement();
   const historyNodesCount = history.value.getNodesCount();
   const lastHistoryNode = history.value.getLastNode;
   if (historyNodesCount > 1 && lastHistoryNode.fan) {

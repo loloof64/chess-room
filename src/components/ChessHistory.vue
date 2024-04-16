@@ -104,7 +104,7 @@ function addNodeOrCompleteFirst(parameters) {
  * Scroll, so that the last child is visible.
  */
 function scrollToLastElement() {
-  const lastChild = document.querySelector(".main-content span:last-child");
+  const lastChild = document.querySelector(".main-content *:last-child");
   lastChild.scrollIntoView();
 }
 
