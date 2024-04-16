@@ -1,144 +1,158 @@
-import { ID, Query } from "appwrite";
-import { databases, databaseId, collectionId } from '@/lib/appwrite.js';
-import { useRoomStore } from '@/stores/RoomStore.js';
+import { expectedOrigin } from "@/credentials/firebase.js";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  updateDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import db from "@/lib/firebase.js";
+import { useRoomStore } from "@/stores/RoomStore.js";
 
-function generateId() {
-    const now = Date.now();
-    const factor = Math.floor(Math.random() * 100);
+function subscribeToAllRoomsChange(documentCallback) {
+  return onSnapshot(collection(db, "rooms"), (snapshot) => {
+    snapshot.forEach(documentCallback);
+  });
+}
 
-    return (now * factor).toString();
+function subscribeToSingleRoomChange(roomId, documentCallback) {
+  return onSnapshot(doc(db, "rooms", roomId), (snapshot) => {
+    documentCallback(snapshot);
+  });
 }
 
 async function tryCreatingRoom({ nickname }) {
-    const isEmptyNickname = nickname.length === 0;
-    const isTooShortNickname = nickname.length < 4;
-    if (isEmptyNickname) {
-        return { error: 'pages.createRoom.errors.emptyNickname' };
-    }
-    if (isTooShortNickname) {
-        return { error: 'pages.createRoom.errors.tooShortNickname' };
-    }
+  const isEmptyNickname = nickname.length === 0;
+  const isTooShortNickname = nickname.length < 4;
+  if (isEmptyNickname) {
+    return { error: "pages.createRoom.errors.emptyNickname" };
+  }
+  if (isTooShortNickname) {
+    return { error: "pages.createRoom.errors.tooShortNickname" };
+  }
 
-    try {
-        const result = await databases.createDocument(
-            databaseId,
-            collectionId,
-            ID.unique(),
-            {
-                id: generateId(),
-                hostUser: nickname,
-            }
-        );
-        return { result };
-    }
-    catch (error) {
-        console.error(error);
-        return { error: 'pages.createRoom.errors.failedCreatingRoom', isFatalError: true };
-    }
+  try {
+    const roomCollection = collection(db, "rooms");
+    const docRef = await addDoc(roomCollection, {
+      origin: expectedOrigin,
+      hostUser: nickname,
+    });
+    return { result: docRef };
+  } catch (error) {
+    console.error(error);
+    return {
+      error: "pages.createRoom.errors.failedCreatingRoom",
+      isFatalError: true,
+    };
+  }
 }
 
 async function tryJoiningRoom({ nickname, roomId }) {
-    const isEmptyNickname = nickname.length === 0;
-    const isTooShortNickname = nickname.length < 4;
-    const isEmptyId = roomId.length === 0;
+  const isEmptyNickname = nickname.length === 0;
+  const isTooShortNickname = nickname.length < 4;
+  const isEmptyId = roomId.length === 0;
 
-    if (isEmptyNickname) {
-        return { error: 'pages.joinRoom.errors.emptyNickname' };
+  if (isEmptyNickname) {
+    return { error: "pages.joinRoom.errors.emptyNickname" };
+  }
+  if (isTooShortNickname) {
+    return { error: "pages.joinRoom.errors.tooShortNickname" };
+  }
+  if (isEmptyId) {
+    return { error: "pages.joinRoom.errors.emptyRoomId" };
+  }
+
+  try {
+    const matchingDocumentRef = doc(db, "rooms", roomId);
+    const matchingDocument = await getDoc(matchingDocumentRef);
+
+    const noMatchingRoom = !matchingDocument.exists();
+    if (noMatchingRoom) {
+      return { error: "pages.joinRoom.errors.noMatchingRoom" };
     }
-    if (isTooShortNickname) {
-        return { error: 'pages.joinRoom.errors.tooShortNickname' };
+
+    const documentData = matchingDocument.data();
+    const isAlreadyFilledRoom = documentData.guestUser;
+
+    if (isAlreadyFilledRoom) {
+      return { error: "pages.joinRoom.errors.alreadyFilledRoom" };
     }
-    if (isEmptyId) {
-        return { error: 'pages.joinRoom.errors.emptyRoomId' }
-    }
 
-    try {
-        const matchingDocuments = await databases.listDocuments(
-            databaseId,
-            collectionId,
-            [
-                Query.equal('id', roomId)
-            ]
-        );
-        const noMatchingRoom = matchingDocuments.total === 0;
-        if (noMatchingRoom) {
-            return { error: 'pages.joinRoom.errors.noMatchingRoom' }
-        }
+    const newValues = {
+      guestUser: nickname,
+    };
 
-        const matchingDocument = matchingDocuments.documents[0];
-        const isAlreadyFilledRoom = matchingDocument.guestUser;
+    await updateDoc(matchingDocumentRef, newValues);
 
-        if (isAlreadyFilledRoom) {
-            return { error: 'pages.joinRoom.errors.alreadyFilledRoom' }
-        }
+    const roomStore = useRoomStore();
+    roomStore.setRoomId(roomId);
 
-        const docId = matchingDocument.$id;
-
-        await databases.updateDocument(databaseId, collectionId, docId, {
-            guestUser: nickname,
-        });
-
-        const roomStore = useRoomStore();
-        roomStore.setDocId(docId);
-
-        return { isOk: true };
-    }
-    catch (error) {
-        console.error(error);
-        return { error: 'pages.joinRoom.errors.failedJoiningRoom', isFatalError: true };
-    }
+    return { isOk: true };
+  } catch (error) {
+    console.error(error);
+    return {
+      error: "pages.joinRoom.errors.failedJoiningRoom",
+      isFatalError: true,
+    };
+  }
 }
 
 async function tryUpdatingRoom({ newValues, roomId }) {
-    try {
-        const matchingDocuments = await databases.listDocuments(
-            databaseId,
-            collectionId,
-            [
-                Query.equal('id', roomId)
-            ]
-        );
-        const noMatchingRoom = matchingDocuments.total === 0;
-        if (noMatchingRoom) {
-            console.error('No matching room when trying to update!');
-            return { error: 'page.generic.errors.failedUpdatingRoom', isFatalError: true }
-        }
+  try {
+    const matchingDocumentRef = doc(db, "rooms", roomId);
+    const matchingDocument = await getDoc(matchingDocumentRef);
 
-        const matchingDocument = matchingDocuments.documents[0];
-        const docId = matchingDocument.$id;
-
-        await databases.updateDocument(databaseId, collectionId, docId, newValues);
-
-        return { isOk: true };
+    const noMatchingRoom = !matchingDocument.exists();
+    if (noMatchingRoom) {
+      console.error("No matching room when trying to update!");
+      return {
+        error: "page.generic.errors.failedUpdatingRoom",
+        isFatalError: true,
+      };
     }
-    catch (error) {
-        console.error(error);
-        return { error: 'pages.generic.errors.failedUpdatingRoom', isFatalError: true };
-    }
+
+    await updateDoc(matchingDocumentRef, newValues);
+
+    return { isOk: true };
+  } catch (error) {
+    console.error(error);
+    return {
+      error: "pages.generic.errors.failedUpdatingRoom",
+      isFatalError: true,
+    };
+  }
 }
 
 async function tryReadingRoom({ roomId }) {
-    try {
-        const matchingDocuments = await databases.listDocuments(
-            databaseId,
-            collectionId,
-            [
-                Query.equal('id', roomId)
-            ]
-        );
-        const noMatchingRoom = matchingDocuments.total === 0;
-        if (noMatchingRoom) {
-            console.error('No matching room when trying to update!');
-            return { error: 'page.generic.errors.failedUpdatingRoom', isFatalError: true }
-        }
+  try {
+    const matchingDocumentRef = doc(db, "rooms", roomId);
+    const matchingDocument = await getDoc(matchingDocumentRef);
 
-        const matchingDocument = matchingDocuments.documents[0];
-        return { isOk: true, matchingDocument };
+    const noMatchingRoom = !matchingDocument.exists();
+    if (noMatchingRoom) {
+      console.error("No matching room when trying to update!");
+      return {
+        error: "page.generic.errors.failedUpdatingRoom",
+        isFatalError: true,
+      };
     }
-    catch (error) {
-        console.error(error);
-        return { error: 'pages.generic.errors.failedReadingRoom', isFatalError: true };
-    }
+
+    return { isOk: true, matchingDocument: matchingDocument.data() };
+  } catch (error) {
+    console.error(error);
+    return {
+      error: "pages.generic.errors.failedReadingRoom",
+      isFatalError: true,
+    };
+  }
 }
 
-export { tryCreatingRoom, tryJoiningRoom, tryUpdatingRoom, tryReadingRoom };
+export {
+  tryCreatingRoom,
+  tryJoiningRoom,
+  tryUpdatingRoom,
+  tryReadingRoom,
+  subscribeToAllRoomsChange,
+  subscribeToSingleRoomChange,
+};

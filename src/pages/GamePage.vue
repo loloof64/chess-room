@@ -19,7 +19,11 @@ import NewGameDialog from "@/components/dialogs/NewGameDialog.vue";
 import GiveUpGameDialog from "@/components/dialogs/GiveUpGameDialog.vue";
 
 import { openDialog } from "vue3-promise-dialog";
-import { tryUpdatingRoom, tryReadingRoom } from "@/lib/roomHandler.js";
+import {
+  tryUpdatingRoom,
+  tryReadingRoom,
+  subscribeToSingleRoomChange,
+} from "@/lib/roomHandler.js";
 
 import { useRoomStore } from "@/stores/RoomStore.js";
 import { useGameStore } from "@/stores/GameStore.js";
@@ -31,6 +35,8 @@ const roomStore = useRoomStore();
 const gameStore = useGameStore();
 
 let pgnLogic = new Chess();
+
+const roomSubscription = ref();
 
 const boardSize = ref("100");
 const board = ref();
@@ -54,7 +60,6 @@ const {
 
 const whiteTurn = computed(() => currentPosition.value.split(" ")[1] === "w");
 
-import { client, databaseId, collectionId } from "@/lib/appwrite.js";
 const unsubscribeCheckNewGameStarted = ref();
 
 function updatePgnLogic() {
@@ -194,27 +199,21 @@ function moveCoordinatesToLongUciNotation(coodinates) {
   return `${firstFile}${firstRank}${endFile}${endRank}`;
 }
 
-function handleEventInDb(response) {
-  const payload = response.payload;
-  const localDatabaseId = payload.$databaseId;
-  const localCollectionId = payload.$collectionId;
-  const localDocumentId = payload.id;
-  const gameHasStarted = ["true", true].includes(payload.gameStarted);
+function handleEventInDb(roomDocument) {
+  const documentData = roomDocument.data();
+  const localDocumentId = roomDocument.id;
+  const gameHasStarted = ["true", true].includes(documentData.gameStarted);
   const roomId = roomStore.roomId;
 
-  const isMatchingDocument =
-    databaseId == localDatabaseId &&
-    collectionId == localCollectionId &&
-    roomId == localDocumentId;
+  const isMatchingDocument = roomId == localDocumentId;
   const weAreGuest = !weAreHost.value;
-
   if (isMatchingDocument) {
     if (gameHasStarted) {
       const gameStartHandlerAlreadyProcessed = roomStore.gameStarted;
       if (weAreGuest && !gameStartHandlerAlreadyProcessed) {
         const boardShouldBeReversed =
-          (payload.hostHasWhite && !payload.roomOwner) ||
-          (!payload.hostHasWhite && payload.roomOwner);
+          (documentData.hostHasWhite && !documentData.roomOwner) ||
+          (!documentData.hostHasWhite && documentData.roomOwner);
         roomStore.setGameStartedStatus(true);
         gameStore.setBoardReversedStatus(boardShouldBeReversed);
         boardReversed.value = boardShouldBeReversed;
@@ -223,28 +222,28 @@ function handleEventInDb(response) {
       // try to play lastMoveSan
       const success = board.value.playManualMove(
         moveCoordinatesToLongUciNotation({
-          startFile: payload.lastMoveStartFile,
-          startRank: payload.lastMoveStartRank,
-          endFile: payload.lastMoveEndFile,
-          endRank: payload.lastMoveEndRank,
-          promotion: payload.lastMovePromotion,
+          startFile: documentData.lastMoveStartFile,
+          startRank: documentData.lastMoveStartRank,
+          endFile: documentData.lastMoveEndFile,
+          endRank: documentData.lastMoveEndRank,
+          promotion: documentData.lastMovePromotion,
         })
       );
       if (!success) {
         /*
-        console.log(`Illegal move ${payload.lastMoveSan}`);
+        console.log(`Illegal move ${documentData.lastMoveSan}`);
         console.log(`Board position is ${board.value.getCurrentPosition()}`);
         */
         return;
       }
       gameStore.setLastMoveArrow({
         start: {
-          file: payload.lastMoveStartFile,
-          rank: payload.lastMoveStartRank,
+          file: documentData.lastMoveStartFile,
+          rank: documentData.lastMoveStartRank,
         },
         end: {
-          file: payload.lastMoveEndFile,
-          rank: payload.lastMoveEndRank,
+          file: documentData.lastMoveEndFile,
+          rank: documentData.lastMoveEndRank,
         },
       });
       const resultingPosition = board.value.getCurrentPosition();
@@ -252,7 +251,7 @@ function handleEventInDb(response) {
     }
     // !gameHasStarted
     else {
-      const giveUpSide = payload.giveUpSide;
+      const giveUpSide = documentData.giveUpSide;
       const otherPeerInitiatedGiveUp = weAreHost.value
         ? giveUpSide >= guestGaveUp
         : giveUpSide <= hostGaveUp;
@@ -489,7 +488,14 @@ function handleRequestStartPosition() {
   }
 }
 
-function handleRequestPosition({nodeIndex, fen, fromFileIndex, fromRankIndex, toFileIndex, toRankIndex}) {
+function handleRequestPosition({
+  nodeIndex,
+  fen,
+  fromFileIndex,
+  fromRankIndex,
+  toFileIndex,
+  toRankIndex,
+}) {
   if (!gameStarted.value) {
     const success = board.value.setPositionAndLastMove(fen, {
       start: {
@@ -507,14 +513,22 @@ function handleRequestPosition({nodeIndex, fen, fromFileIndex, fromRankIndex, to
   }
 }
 
-onMounted(() => {
+function handleRoomChanged(roomDocument) {
+  handleEventInDb(roomDocument);
+}
+
+onMounted(async () => {
   const roomId = roomStore.roomId;
   if (roomId) {
-    const realDbChannel = `databases.${databaseId}.collections.${collectionId}.documents.${roomId}"`;
-    unsubscribeCheckNewGameStarted.value = client.subscribe(
-      [realDbChannel, "documents"],
-      handleEventInDb
+    roomSubscription.value = await subscribeToSingleRoomChange(
+      roomId,
+      handleRoomChanged
     );
+  }
+});
+onBeforeUnmount(() => {
+  if (roomSubscription.value) {
+    roomSubscription.value();
   }
 });
 

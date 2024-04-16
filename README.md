@@ -8,16 +8,22 @@ A simple chess room
 
 #### Appwrite
 
-* Create a database in your AppWrite account, and a collection inside it.
+* Create a Cloud Firestore database.
 
-* Create a file  <projectRoot>/src/credentials/appwrite.js.
-And insert this content, replacing the placeholders with your project id, database id and collection id :
+* Create a file  <projectRoot>/src/credentials/firebase.js.
+And insert this content, replacing the placeholders with your project firebase configuration :
 
 ```javascript
-const appId = "<YourAppId>";
-const databaseId = "<YourDatabaseId>";
-const collectionId = "<YourCollectionId>";
-export {appId, databaseId, collectionId};
+export default {
+  apiKey: <YourId>,
+  authDomain: <YourId>,
+  projectId: <YourId>,
+  storageBucket: <YourId>,
+  messagingSenderId: <YourId>,
+  appId: <YourId>,
+};
+
+export const expectedOrigin = <TheExpectedOriginFromYourSecurityRule>;
 ```
 
 ## Credits
