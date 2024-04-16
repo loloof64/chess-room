@@ -508,7 +508,7 @@ function handleRequestPosition({
       },
     });
     if (success) {
-      history.value.setSelectedNode(-1);
+      history.value.setSelectedNode(nodeIndex);
     }
   }
 }

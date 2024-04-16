@@ -119,9 +119,11 @@ function setSelectedNode(nodeIndex) {
   selectedNodeIndex.value = nodeIndex;
   if (nodeIndex > 0) {
     const targetChild = document.querySelector(
-      `.main-content span:nth-child(${nodeIndex})`
+      `.main-content > *:nth-child(${nodeIndex + 1})`
     );
-    targetChild.scrollIntoView();
+    if (targetChild) {
+      targetChild.scrollIntoView();
+    }
   }
 }
 
@@ -146,7 +148,6 @@ function selectPreviousNode() {
     const isAMoveNode = currentNode.fen;
     if (isAMoveNode) break;
   }
-
 
   if (selectedNodeIndex.value >= 0) {
     const node = nodes.value[selectedNodeIndex.value];
