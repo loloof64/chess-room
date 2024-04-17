@@ -109,7 +109,7 @@ function toggleClockSide() {
 
   if (whiteTurn.value) {
     pauseWhiteTimer.value();
-    resumeBlackTimer().value();
+    resumeBlackTimer.value();
   } else {
     pauseBlackTimer.value();
     resumeWhiteTimer.value();
@@ -172,9 +172,6 @@ async function setGameOverByTime() {
 }
 
 function handleTimerTick() {
-  ///////////////////////////////////////TODO remove
-  console.log("handling time event");
-  /////////////////////////////////////////
   const currentRemainingTicks = whiteClockSide.value
     ? gameStore.remainingWhiteTicks
     : gameStore.remainingBlackTicks;
@@ -188,7 +185,7 @@ function handleTimerTick() {
     (weHaveWhite.value && gameStore.remainingWhiteTicks <= 0) ||
     (!weHaveWhite.value && gameStore.remainingBlackTicks <= 0);
 
-  if (weHaveNoMoreTime <= 0) setGameOverByTime();
+  if (weHaveNoMoreTime) setGameOverByTime();
 }
 
 function resizeBoard() {
@@ -211,12 +208,12 @@ function startClockIfNeeded() {
     clean: cleanWhite,
     pause: pauseWhite,
     resume: resumeWhite,
-  } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+  } = useIntervalFn(handleTimerTick, 500, {immediate: false});
   const {
     clean: cleanBlack,
     pause: pauseBlack,
     resume: resumeBlack,
-  } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+  } = useIntervalFn(handleTimerTick, 500, {immediate: false});
 
   // starts the right timer
   if (whiteTurn.value) {
@@ -307,6 +304,12 @@ async function openNewGameOptionsDialog() {
       withClock,
       clockMinutes,
       clockSeconds,
+      lastMoveSan: undefined,
+      lastMoveFan: undefined,
+      lastMoveStartFile: undefined,
+      lastMoveStartRank: undefined,
+      lastMoveEndFile: undefined,
+      lastMoveEndRank: undefined,
     };
     const roomId = roomStore.roomId;
     const result = await tryUpdatingRoom({ roomId, newValues });
@@ -835,12 +838,12 @@ onMounted(() => {
             clean: cleanWhite,
             pause: pauseWhite,
             resume: resumeWhite,
-          } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+          } = useIntervalFn(handleTimerTick, 500, {immediate: false});
           const {
             clean: cleanBlack,
             pause: pauseBlack,
             resume: resumeBlack,
-          } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+          } = useIntervalFn(handleTimerTick, 500, {immediate: false});
 
           // starts the right timer
           if (whiteTurn.value) {
@@ -866,12 +869,12 @@ onMounted(() => {
         clean: cleanWhite,
         pause: pauseWhite,
         resume: resumeWhite,
-      } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+      } = useIntervalFn(handleTimerTick, 500, {immediate: false});
       const {
         clean: cleanBlack,
         pause: pauseBlack,
         resume: resumeBlack,
-      } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+      } = useIntervalFn(handleTimerTick, 500, {immediate: false});
 
       // starts the right timer
       if (whiteTurn.value) {
