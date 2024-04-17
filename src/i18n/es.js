@@ -51,6 +51,11 @@ export default {
       hasWhite: "¿Tiene los blancos?",
       hasWhiteYes: "Sí",
       hasWhiteNo: "No",
+      minutes: "minutos",
+      seconds: "segundos",
+      includeTime: "¿Jugar con el reloj?",
+      includeTimeYes: "Sí",
+      includeTimeNo: "No",
     },
     giveUp: {
       title: "¿Abandonar?",
@@ -65,6 +70,8 @@ export default {
         perpetualDraw: "¡Igualdad por repetición triple!",
         missingMaterial: "¡Igualdad con el material que falta!",
         fiftyMovesDraw: "¡Igualdad según la regla de los 50 movimientos!",
+        userLostOnTime: "¡Perdiste por tiempo muerto!",
+        opponentLostOnTime: "¡Su oponente perdió por tiempo muerto!",
       },
     },
     pgn: {

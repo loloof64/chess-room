@@ -51,6 +51,11 @@ export default {
       hasWhite: "Do you have white ?",
       hasWhiteYes: "Yes",
       hasWhiteNo: "No",
+      minutes: "minutes",
+      seconds: "seconds",
+      includeTime: "Play with clock ?",
+      includeTimeYes: "Yes",
+      includeTimeNo: "No",
     },
     giveUp: {
       title: "Give up ?",
@@ -65,6 +70,8 @@ export default {
         perpetualDraw: "Draw by three-fold repetition !",
         missingMaterial: "Draw by missing material !",
         fiftyMovesDraw: "Draw by the 50 moves rule !",
+        userLostOnTime: "You lost on time out !",
+        opponentLostOnTime: "Your opponent lost on time out !",
       },
     },
     pgn: {

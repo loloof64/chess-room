@@ -36,6 +36,12 @@ export const useGameStore = defineStore("GameStore", {
           rank: -Infinity,
         },
       }),
+      withClock: useSessionStorage("GameStore$withClock", false),
+      timeMinutes: useSessionStorage("GameStore$timeMinutes", 5),
+      timeSeconds: useSessionStorage("GameStore$timeSeconds", 0),
+      remainingWhiteTicks: useSessionStorage("GameStore$remainingWhiteTicks", 999),
+      remainingBlackTicks: useSessionStorage("GameStore$remainingBlackTicks", 999),
+      whiteClockSide: useSessionStorage("GameStore$whiteClockSide", true),
     };
   },
   actions: {
@@ -73,6 +79,24 @@ export const useGameStore = defineStore("GameStore", {
     setStartPosition(newPosition) {
       this.startPosition = newPosition;
     },
+    setWithClock(newValue) {
+      this.withClock = newValue;
+    },
+    setTimeMinutes(newValue) {
+      this.timeMinutes = newValue;
+    },
+    setTimeSeconds(newValue) {
+      this.timeSeconds = newValue;
+    },
+    setRemainingWhiteTicks(newValue) {
+      this.remainingWhiteTicks = newValue;
+    },
+    setRemainingBlackTicks(newValue) {
+      this.remainingBlackTicks = newValue;
+    },
+    setWhiteClockSideStatus(newValue) {
+      this.whiteClockSide = newValue;
+    }
   },
   persist: sessionStorage,
 });

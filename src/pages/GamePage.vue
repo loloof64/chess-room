@@ -1,12 +1,20 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
+import { useIntervalFn } from "@vueuse/core";
 import { notify } from "@kyvg/vue3-notification";
 import { sleep } from "../utils";
 import { Chess } from "chess.js";
 import { format } from "date-fns";
 
-import { noGiveUp, hostGaveUp, guestGaveUp } from "@/constants.js";
+import {
+  noGiveUp,
+  hostGaveUp,
+  guestGaveUp,
+  noLossOnTime,
+  hostLostOnTime,
+  guestLostOnTime,
+} from "@/constants.js";
 import ChessHistory from "@/components/ChessHistory.vue";
 
 import start from "@/assets/images/start.svg";
@@ -42,6 +50,12 @@ const boardSize = ref("100");
 const board = ref();
 const history = ref();
 const boardReversed = ref(false);
+const stopWhiteTimer = ref();
+const stopBlackTimer = ref();
+const pauseWhiteTimer = ref();
+const pauseBlackTimer = ref();
+const resumeWhiteTimer = ref();
+const resumeBlackTimer = ref();
 
 const atLeastAGameStarted = ref(false);
 
@@ -56,11 +70,53 @@ const {
   whiteNickname,
   blackNickname,
   weHaveWhite,
+  withClock,
+  whiteClockSide,
+  timeMinutes,
+  timeSeconds,
+  remainingWhiteTicks,
+  remainingBlackTicks,
 } = storeToRefs(gameStore);
 
 const whiteTurn = computed(() => currentPosition.value.split(" ")[1] === "w");
 
 const unsubscribeCheckNewGameStarted = ref();
+
+function ticksToTime(ticks) {
+  const totalSeconds = Math.floor(ticks / 2);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  let minutesStr = "" + minutes;
+  if (minutesStr.length < 2) {
+    minutesStr = "0" + minutesStr;
+  }
+
+  let secondsStr = "" + seconds;
+  if (secondsStr.length < 2) {
+    secondsStr = "0" + secondsStr;
+  }
+
+  return minutesStr + ":" + secondsStr;
+}
+
+const whiteTime = computed(() => ticksToTime(remainingWhiteTicks.value));
+const blackTime = computed(() => ticksToTime(remainingBlackTicks.value));
+
+function toggleClockSide() {
+  if (!gameStarted.value) return;
+  if (!withClock.value) return;
+
+  if (whiteTurn.value) {
+    pauseWhiteTimer.value();
+    resumeBlackTimer().value();
+  } else {
+    pauseBlackTimer.value();
+    resumeWhiteTimer.value();
+  }
+
+  whiteClockSide.value = !whiteClockSide.value;
+}
 
 function updatePgnLogic() {
   pgnLogic = new Chess(startPosition.value);
@@ -83,12 +139,98 @@ function updatePgnLogic() {
   );
 }
 
+async function setGameOverByTime() {
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
+
+  notify({ text: t("pages.game.outcomes.userLostOnTime") });
+
+  const newValues = {
+    gameStarted: false,
+    lostOnTimeoutSide: weAreHost.value ? hostLostOnTime : guestLostOnTime,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+  if (hasError) {
+    alert(t(result.error));
+    return;
+  }
+  roomStore.setGameStartedStatus(false);
+  board.value.stop();
+  gameStore.setWhitePlayerIsHuman(false);
+  gameStore.setBlackPlayerIsHuman(false);
+
+  updatePgnLogic();
+  history.value.activateNavigationMode();
+}
+
+function handleTimerTick() {
+  ///////////////////////////////////////TODO remove
+  console.log("handling time event");
+  /////////////////////////////////////////
+  const currentRemainingTicks = whiteClockSide.value
+    ? gameStore.remainingWhiteTicks
+    : gameStore.remainingBlackTicks;
+  const newRemainingTicks = currentRemainingTicks - 1;
+  whiteClockSide
+    ? gameStore.setRemainingWhiteTicks(newRemainingTicks)
+    : gameStore.setRemainingBlackTicks(newRemainingTicks);
+
+  // we only handle game lost on time for us, letting the other peer notifying us for his game lost on time
+  const weHaveNoMoreTime =
+    (weHaveWhite.value && gameStore.remainingWhiteTicks <= 0) ||
+    (!weHaveWhite.value && gameStore.remainingBlackTicks <= 0);
+
+  if (weHaveNoMoreTime <= 0) setGameOverByTime();
+}
+
 function resizeBoard() {
   const minSize =
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
   boardSize.value = `${minSize * 0.8}`;
+}
+
+function startClockIfNeeded() {
+  if (!withClock.value) return;
+  const startsWithWhiteSide = currentPosition.value.split(" ")[1] === "w";
+  const totalTimeSeconds = timeMinutes.value * 60 + timeSeconds.value;
+  gameStore.setRemainingWhiteTicks(totalTimeSeconds * 2);
+  gameStore.setRemainingBlackTicks(totalTimeSeconds * 2);
+  gameStore.setWhiteClockSideStatus(startsWithWhiteSide);
+
+  const {
+    clean: cleanWhite,
+    pause: pauseWhite,
+    resume: resumeWhite,
+  } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+  const {
+    clean: cleanBlack,
+    pause: pauseBlack,
+    resume: resumeBlack,
+  } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+
+  // starts the right timer
+  if (whiteTurn.value) {
+    resumeWhite();
+  } else {
+    resumeBlack();
+  }
+
+  stopWhiteTimer.value = cleanWhite;
+  stopBlackTimer.value = cleanBlack;
+  pauseWhiteTimer.value = pauseWhite;
+  pauseBlackTimer.value = pauseBlack;
+  resumeWhiteTimer.value = resumeWhite;
+  resumeBlackTimer.value = resumeBlack;
 }
 
 async function startNewGame() {
@@ -99,8 +241,15 @@ async function startNewGame() {
     alert(t(result.error));
     return;
   }
-  const { startPosition, hostHasWhite, hostUser, guestUser } =
-    result.matchingDocument;
+  const {
+    startPosition,
+    hostHasWhite,
+    hostUser,
+    guestUser,
+    withClock,
+    clockMinutes,
+    clockSeconds,
+  } = result.matchingDocument;
   const startPositionParts = startPosition.split(" ");
   const moveNumber = parseInt(startPositionParts[5]);
   const whiteTurn = startPositionParts[1] === "w";
@@ -108,15 +257,18 @@ async function startNewGame() {
   gameStore.setHistoryNodes(history.value.getNodes());
 
   gameStore.setStartPosition(startPosition);
+  gameStore.setWithClock(withClock);
+  gameStore.setTimeMinutes(clockMinutes);
+  gameStore.setTimeSeconds(clockSeconds);
   board.value.newGame(startPosition);
   gameStore.setCurrentPosition(startPosition);
   const hostPlaysWithWhiteSide = [true, "true"].includes(hostHasWhite);
-  const weHaveWhite =
+  const wePlayWithWhiteSide =
     (hostPlaysWithWhiteSide && weAreHost.value) ||
     (!hostPlaysWithWhiteSide && !weAreHost.value);
-  gameStore.setWeHaveWhiteStatus(weHaveWhite);
-  gameStore.setWhitePlayerIsHuman(weHaveWhite);
-  gameStore.setBlackPlayerIsHuman(!weHaveWhite);
+  gameStore.setWeHaveWhiteStatus(wePlayWithWhiteSide);
+  gameStore.setWhitePlayerIsHuman(wePlayWithWhiteSide);
+  gameStore.setBlackPlayerIsHuman(!wePlayWithWhiteSide);
   gameStore.setWhiteNickname(hostHasWhite ? hostUser : guestUser);
   gameStore.setBlackNickname(hostHasWhite ? guestUser : hostUser);
   atLeastAGameStarted.value = true;
@@ -132,17 +284,29 @@ async function startNewGame() {
       rank: -Infinity,
     },
   });
+
+  startClockIfNeeded();
 }
 
 async function openNewGameOptionsDialog() {
   const result = await openDialog(NewGameDialog, {});
-  const { startPosition, withWhiteSide } = result;
+  const {
+    startPosition,
+    withWhiteSide,
+    withClock,
+    clockMinutes,
+    clockSeconds,
+  } = result;
   if (result) {
     const newValues = {
       gameStarted: true,
       giveUpSide: noGiveUp,
+      lostOnTimeoutSide: noLossOnTime,
       startPosition,
       hostHasWhite: withWhiteSide,
+      withClock,
+      clockMinutes,
+      clockSeconds,
     };
     const roomId = roomStore.roomId;
     const result = await tryUpdatingRoom({ roomId, newValues });
@@ -153,6 +317,9 @@ async function openNewGameOptionsDialog() {
     }
     roomStore.setGameStartedStatus(true);
     gameStore.setStartPosition(startPosition);
+    gameStore.setWithClock(withClock);
+    gameStore.setTimeMinutes(clockMinutes);
+    gameStore.setTimeSeconds(clockSeconds);
     const weAreHost = roomStore.roomOwner;
     const boardShouldBeReversed =
       (withWhiteSide && !weAreHost) || (!withWhiteSide && weAreHost);
@@ -166,6 +333,15 @@ async function openGiveUpGameDialog() {
   const result = await openDialog(GiveUpGameDialog, {});
   const weAreHost = [true, "true"].includes(roomStore.roomOwner);
   if (result) {
+    if (stopWhiteTimer.value) stopWhiteTimer.value();
+    if (stopBlackTimer.value) stopBlackTimer.value();
+    stopWhiteTimer.value = undefined;
+    stopBlackTimer.value = undefined;
+    pauseWhiteTimer.value = undefined;
+    pauseBlackTimer.value = undefined;
+    resumeWhiteTimer.value = undefined;
+    resumeBlackTimer.value = undefined;
+
     const newValues = {
       gameStarted: false,
       giveUpSide: weAreHost ? hostGaveUp : guestGaveUp,
@@ -236,6 +412,9 @@ function handleEventInDb(roomDocument) {
         */
         return;
       }
+      if (withClock.value) {
+        toggleClockSide();
+      }
       gameStore.setLastMoveArrow({
         start: {
           file: documentData.lastMoveStartFile,
@@ -252,9 +431,13 @@ function handleEventInDb(roomDocument) {
     // !gameHasStarted
     else {
       const giveUpSide = documentData.giveUpSide;
+      const lostOnTimeoutSide = documentData.lostOnTimeoutSide;
       const otherPeerInitiatedGiveUp = weAreHost.value
-        ? giveUpSide >= guestGaveUp
-        : giveUpSide <= hostGaveUp;
+        ? giveUpSide === guestGaveUp
+        : giveUpSide === hostGaveUp;
+      const otherPeerLostOnTime = weAreHost.value
+        ? lostOnTimeoutSide === guestLostOnTime
+        : hostLostOnTime;
       if (otherPeerInitiatedGiveUp) {
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
@@ -263,6 +446,15 @@ function handleEventInDb(roomDocument) {
         history.value.activateNavigationMode();
         notify({
           text: t("pages.game.outcomes.gaveUp"),
+        });
+      } else if (otherPeerLostOnTime) {
+        roomStore.setGameStartedStatus(false);
+        gameStore.setWhitePlayerIsHuman(false);
+        gameStore.setBlackPlayerIsHuman(false);
+        updatePgnLogic();
+        history.value.activateNavigationMode();
+        notify({
+          text: t("pages.game.outcomes.opponentLostOnTime"),
         });
       }
     }
@@ -282,6 +474,9 @@ async function handleMoveDone(
   move,
   promotion
 ) {
+  if (withClock.value) {
+    toggleClockSide();
+  }
   history.value.addNodeOrCompleteFirst({
     number: moveNumber,
     whiteTurn,
@@ -293,7 +488,10 @@ async function handleMoveDone(
     toFileIndex: move.end.file,
     toRankIndex: move.end.rank,
   });
+
+  // Wait for the history component to update
   await sleep(10);
+
   history.value.scrollToLastElement();
   const historyNodesCount = history.value.getNodesCount();
   const lastHistoryNode = history.value.getLastNode;
@@ -324,8 +522,17 @@ async function handleMoveDone(
   }
 }
 
-async function handleCheckmate(byWhite) {
+async function handleCheckmate() {
   if (!gameStarted.value) return;
+
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
 
   // let the board and interface update
   await sleep(50);
@@ -354,6 +561,15 @@ async function handleCheckmate(byWhite) {
 async function handleStalemate() {
   if (!gameStarted.value) return;
 
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
+
   // let the board and interface update
   await sleep(50);
 
@@ -380,6 +596,15 @@ async function handleStalemate() {
 
 async function handlePerpetualDraw() {
   if (!gameStarted.value) return;
+
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
 
   // let the board and interface update
   await sleep(50);
@@ -408,6 +633,15 @@ async function handlePerpetualDraw() {
 async function handleMissingMaterial() {
   if (!gameStarted.value) return;
 
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
+
   // let the board and interface update
   await sleep(50);
 
@@ -434,6 +668,15 @@ async function handleMissingMaterial() {
 
 async function handleFiftyMovesDraw() {
   if (!gameStarted.value) return;
+
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
 
   // let the board and interface update
   await sleep(50);
@@ -529,12 +772,17 @@ onMounted(async () => {
   }
 });
 onBeforeUnmount(() => {
+  if (stopWhiteTimer.value) stopWhiteTimer.value();
+  if (stopBlackTimer.value) stopBlackTimer.value();
+  stopWhiteTimer.value = undefined;
+  stopBlackTimer.value = undefined;
+  pauseWhiteTimer.value = undefined;
+  pauseBlackTimer.value = undefined;
+  resumeWhiteTimer.value = undefined;
+  resumeBlackTimer.value = undefined;
   if (roomSubscription.value) {
     roomSubscription.value();
   }
-});
-
-onBeforeUnmount(() => {
   if (unsubscribeCheckNewGameStarted.value) {
     unsubscribeCheckNewGameStarted.value();
   }
@@ -564,6 +812,82 @@ onMounted(() => {
     updatePgnLogic();
     history.value.activateNavigationMode();
   }
+
+  const ourTurn =
+    (whiteTurn.value && weHaveWhite.value) ||
+    (!whiteTurn.value && !weHaveWhite.value);
+  const ourRemainingTicks = weHaveWhite.value
+    ? gameStore.remainingWhiteTicks
+    : gameStore.remainingBlackTicks;
+
+  if (gameStarted.value && withClock.value) {
+    if (ourTurn) {
+      if (ourRemainingTicks > 0) {
+        // A compensation
+        const newTicksValue = ourRemainingTicks - 2;
+        weHaveWhite.value
+          ? gameStore.setRemainingWhiteTicks(newTicksValue)
+          : gameStore.setRemainingBlackTicks(newTicksValue);
+        if (newTicksValue <= 0) {
+          setGameOverByTime();
+        } else {
+          const {
+            clean: cleanWhite,
+            pause: pauseWhite,
+            resume: resumeWhite,
+          } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+          const {
+            clean: cleanBlack,
+            pause: pauseBlack,
+            resume: resumeBlack,
+          } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+
+          // starts the right timer
+          if (whiteTurn.value) {
+            resumeWhite();
+          } else {
+            resumeBlack();
+          }
+
+          stopWhiteTimer.value = cleanWhite;
+          stopBlackTimer.value = cleanBlack;
+          pauseWhiteTimer.value = pauseWhite;
+          pauseBlackTimer.value = pauseBlack;
+          resumeWhiteTimer.value = resumeWhite;
+          resumeBlackTimer.value = resumeBlack;
+        }
+      } else {
+        setGameOverByTime();
+      }
+    }
+    // we update the peer clock : we don't need compensation, as we'll be notified anyway if he lost on time
+    else {
+      const {
+        clean: cleanWhite,
+        pause: pauseWhite,
+        resume: resumeWhite,
+      } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+      const {
+        clean: cleanBlack,
+        pause: pauseBlack,
+        resume: resumeBlack,
+      } = useIntervalFn(() => handleTimerTick, 500, {immediate: false});
+
+      // starts the right timer
+      if (whiteTurn.value) {
+        resumeWhite();
+      } else {
+        resumeBlack();
+      }
+
+      stopWhiteTimer.value = cleanWhite;
+      stopBlackTimer.value = cleanBlack;
+      pauseWhiteTimer.value = pauseWhite;
+      pauseBlackTimer.value = pauseBlack;
+      resumeWhiteTimer.value = resumeWhite;
+      resumeBlackTimer.value = resumeBlack;
+    }
+  }
 });
 </script>
 
@@ -591,6 +915,16 @@ onMounted(() => {
       />
     </div>
     <div id="miscZone">
+      <!--clock -->
+      <div class="clock" v-if="withClock">
+        <div class="side white">
+          {{ whiteTime }}
+        </div>
+        <div class="side black">
+          {{ blackTime }}
+        </div>
+      </div>
+      <!--clock -->
       <!-- buttons -->
       <div id="buttons">
         <button @click="toggleBoardOrientation">
@@ -613,6 +947,7 @@ onMounted(() => {
         </button>
       </div>
       <!-- buttons -->
+      <!-- nicknames -->
       <table id="nicknames" v-if="atLeastAGameStarted">
         <tr class="nickname" :class="[whiteTurn ? 'highlight' : '']">
           <td><div class="color white" /></td>
@@ -629,6 +964,7 @@ onMounted(() => {
           <td><img :src="user" v-if="weHaveWhite === false" /></td>
         </tr>
       </table>
+      <!-- nicknames -->
     </div>
   </div>
 </template>
@@ -737,6 +1073,34 @@ onMounted(() => {
 .nickname > td > img {
   width: 3vw;
   height: 3vw;
+}
+
+.clock {
+  display: flex;
+  flex-direction: row;
+  border: 1px solid black;
+}
+
+.clock > .side {
+  padding: 5px;
+  border: 1px solid black;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: xx-large;
+}
+
+.clock > .side.white {
+  color: black;
+  background-color: white;
+}
+
+.clock > .side.black {
+  color: white;
+  background-color: black;
 }
 
 @media (max-width: 1000px) {

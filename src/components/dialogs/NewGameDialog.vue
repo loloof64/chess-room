@@ -10,11 +10,17 @@ const currentPosition = ref(DEFAULT_POSITION);
 const previewBoard = ref();
 const previewSize = ref("100");
 const withWhiteSide = ref(true);
+const includeTime = ref(true);
+const timeMinutes = ref(5);
+const timeSeconds = ref(0);
 
 function startNewGame() {
   const newGameData = {
     startPosition: currentPosition.value,
     withWhiteSide: withWhiteSide.value,
+    withClock: includeTime.value,
+    clockMinutes: timeMinutes.value,
+    clockSeconds: timeSeconds.value,
   };
   closeDialog(newGameData);
 }
@@ -28,12 +34,17 @@ function handleGameTurnChange(e) {
   withWhiteSide.value = newValue === "yes";
 }
 
+function handleIncludeTimeChange(e) {
+  const newValue = e.target.value;
+  includeTime.value = newValue === "yes";
+}
+
 onMounted(() => {
   const minSize =
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  previewSize.value = `${minSize * 0.75}`;
+  previewSize.value = `${minSize * 0.2}`;
   previewBoard.value.newGame(currentPosition.value);
 });
 
@@ -50,7 +61,7 @@ defineExpose({
       <header>
         <h2>{{ t("pages.newGame.title") }}</h2>
       </header>
-      <section>
+      <section class="mainZone">
         <ChessboardVue
           id="previewBoard"
           ref="previewBoard"
@@ -58,33 +69,80 @@ defineExpose({
           :whitePlayerHuman="false"
           :blackPlayerHuman="false"
         />
-        <div class="field">
-          {{ t("pages.newGame.hasWhite") }}
-          <input
-            type="radio"
-            name="hasWhite"
-            value="yes"
-            checked
-            @change="handleGameTurnChange"
-          />
-          <label for="yes">{{ t("pages.newGame.hasWhiteYes") }}</label>
+        <aside>
+          <div class="field">
+            {{ t("pages.newGame.hasWhite") }}
+            <input
+              type="radio"
+              name="hasWhite"
+              id="hasWhiteYes"
+              value="yes"
+              checked
+              @change="handleGameTurnChange"
+            />
+            <label for="hasWhiteYes">{{ t("pages.newGame.hasWhiteYes") }}</label>
 
-          <input
-            type="radio"
-            name="hasWhite"
-            value="no"
-            @change="handleGameTurnChange"
-          />
-          <label for="yes">{{ t("pages.newGame.hasWhiteNo") }}</label>
-        </div>
-        <div id="button">
-          <button class="ok" @click="startNewGame">
-            {{ t("pages.newGame.submit") }}
-          </button>
-          <button class="cancel" @click="cancel">
-            {{ t("pages.newGame.cancel") }}
-          </button>
-        </div>
+            <input
+              type="radio"
+              name="hasWhite"
+              id="hasWhiteNo"
+              value="no"
+              @change="handleGameTurnChange"
+            />
+            <label for="hasWhiteNo">{{ t("pages.newGame.hasWhiteNo") }}</label>
+          </div>
+          <div class="field">
+            {{ t("pages.newGame.includeTime") }}
+            <input
+              type="radio"
+              name="includeTime"
+              id="includeTimeYes"
+              value="yes"
+              checked
+              @change="handleIncludeTimeChange"
+            />
+            <label for="includeTimeYes">{{ t("pages.newGame.includeTimeYes") }}</label>
+
+            <input
+              type="radio"
+              name="includeTime"
+              id="includeTimeNo"
+              value="no"
+              @change="handleIncludeTimeChange"
+            />
+            <label for="includeTimeNo">{{ t("pages.newGame.includeTimeNo") }}</label>
+          </div>
+          <div class="field" v-if="includeTime">
+            <input
+              type="number"
+              id="timeMinutes"
+              name="timeMinutes"
+              min="0"
+              max="60"
+              v-model="timeMinutes"
+              @change="handleTimeMinutesChange"
+            />
+            <label for="timeMinutes">{{ t("pages.newGame.minutes") }}</label>
+            <input
+              type="number"
+              id="timeSeconds"
+              name="timeSeconds"
+              min="0"
+              max="60"
+              v-model="timeSeconds"
+              @change="handleTimeSecondsChange"
+            />
+            <label for="timeSeconds">{{ t("pages.newGame.seconds") }}</label>
+          </div>
+          <div id="button">
+            <button class="ok" @click="startNewGame">
+              {{ t("pages.newGame.submit") }}
+            </button>
+            <button class="cancel" @click="cancel">
+              {{ t("pages.newGame.cancel") }}
+            </button>
+          </div>
+        </aside>
       </section>
     </div>
   </div>
@@ -92,6 +150,7 @@ defineExpose({
 
 <style scoped>
 .dialog {
+  width: 100%;
   z-index: 100;
   position: fixed;
   top: 0;
@@ -105,6 +164,7 @@ defineExpose({
   position: fixed;
   top: 50%;
   left: 50%;
+  width: 60%;
   transform: translate(-50%, -50%);
   background-color: white;
   padding: 20px;
@@ -144,5 +204,24 @@ button.cancel {
 
 button:has(> img) {
   margin: 0px 20px;
+}
+
+.mainZone {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.mainZone > aside {
+  display: flex;
+  margin: 0 10px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.field > * {
+  margin: 3px;
 }
 </style>
