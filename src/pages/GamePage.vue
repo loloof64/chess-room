@@ -50,8 +50,6 @@ const boardSize = ref("100");
 const board = ref();
 const history = ref();
 const boardReversed = ref(false);
-const stopWhiteTimer = ref();
-const stopBlackTimer = ref();
 const pauseWhiteTimer = ref();
 const pauseBlackTimer = ref();
 const resumeWhiteTimer = ref();
@@ -140,10 +138,8 @@ function updatePgnLogic() {
 }
 
 async function setGameOverByTime() {
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -204,16 +200,16 @@ function startClockIfNeeded() {
   gameStore.setRemainingBlackTicks(totalTimeSeconds * 2);
   gameStore.setWhiteClockSideStatus(startsWithWhiteSide);
 
-  const {
-    clean: cleanWhite,
-    pause: pauseWhite,
-    resume: resumeWhite,
-  } = useIntervalFn(handleTimerTick, 500, {immediate: false});
-  const {
-    clean: cleanBlack,
-    pause: pauseBlack,
-    resume: resumeBlack,
-  } = useIntervalFn(handleTimerTick, 500, {immediate: false});
+  const { pause: pauseWhite, resume: resumeWhite } = useIntervalFn(
+    handleTimerTick,
+    500,
+    { immediate: false }
+  );
+  const { pause: pauseBlack, resume: resumeBlack } = useIntervalFn(
+    handleTimerTick,
+    500,
+    { immediate: false }
+  );
 
   // starts the right timer
   if (whiteTurn.value) {
@@ -222,12 +218,19 @@ function startClockIfNeeded() {
     resumeBlack();
   }
 
-  stopWhiteTimer.value = cleanWhite;
-  stopBlackTimer.value = cleanBlack;
   pauseWhiteTimer.value = pauseWhite;
   pauseBlackTimer.value = pauseBlack;
   resumeWhiteTimer.value = resumeWhite;
   resumeBlackTimer.value = resumeBlack;
+
+  //////////////////////////////////////////////TODO remove
+  console.log("########################################");
+  console.log(pauseWhiteTimer.value);
+  console.log(pauseBlackTimer.value);
+  console.log(resumeWhiteTimer.value);
+  console.log(resumeBlackTimer.value);
+  console.log("########################################");
+  //////////////////////////////////////////////
 }
 
 async function startNewGame() {
@@ -336,10 +339,8 @@ async function openGiveUpGameDialog() {
   const result = await openDialog(GiveUpGameDialog, {});
   const weAreHost = [true, "true"].includes(roomStore.roomOwner);
   if (result) {
-    if (stopWhiteTimer.value) stopWhiteTimer.value();
-    if (stopBlackTimer.value) stopBlackTimer.value();
-    stopWhiteTimer.value = undefined;
-    stopBlackTimer.value = undefined;
+    if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+    if (pauseBlackTimer.value) pauseBlackTimer.value();
     pauseWhiteTimer.value = undefined;
     pauseBlackTimer.value = undefined;
     resumeWhiteTimer.value = undefined;
@@ -528,10 +529,8 @@ async function handleMoveDone(
 async function handleCheckmate() {
   if (!gameStarted.value) return;
 
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -564,10 +563,8 @@ async function handleCheckmate() {
 async function handleStalemate() {
   if (!gameStarted.value) return;
 
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -600,10 +597,8 @@ async function handleStalemate() {
 async function handlePerpetualDraw() {
   if (!gameStarted.value) return;
 
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -636,10 +631,8 @@ async function handlePerpetualDraw() {
 async function handleMissingMaterial() {
   if (!gameStarted.value) return;
 
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -672,10 +665,8 @@ async function handleMissingMaterial() {
 async function handleFiftyMovesDraw() {
   if (!gameStarted.value) return;
 
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -775,10 +766,8 @@ onMounted(async () => {
   }
 });
 onBeforeUnmount(() => {
-  if (stopWhiteTimer.value) stopWhiteTimer.value();
-  if (stopBlackTimer.value) stopBlackTimer.value();
-  stopWhiteTimer.value = undefined;
-  stopBlackTimer.value = undefined;
+  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+  if (pauseBlackTimer.value) pauseBlackTimer.value();
   pauseWhiteTimer.value = undefined;
   pauseBlackTimer.value = undefined;
   resumeWhiteTimer.value = undefined;
@@ -834,16 +823,16 @@ onMounted(() => {
         if (newTicksValue <= 0) {
           setGameOverByTime();
         } else {
-          const {
-            clean: cleanWhite,
-            pause: pauseWhite,
-            resume: resumeWhite,
-          } = useIntervalFn(handleTimerTick, 500, {immediate: false});
-          const {
-            clean: cleanBlack,
-            pause: pauseBlack,
-            resume: resumeBlack,
-          } = useIntervalFn(handleTimerTick, 500, {immediate: false});
+          const { pause: pauseWhite, resume: resumeWhite } = useIntervalFn(
+            handleTimerTick,
+            500,
+            { immediate: false }
+          );
+          const { pause: pauseBlack, resume: resumeBlack } = useIntervalFn(
+            handleTimerTick,
+            500,
+            { immediate: false }
+          );
 
           // starts the right timer
           if (whiteTurn.value) {
@@ -852,8 +841,6 @@ onMounted(() => {
             resumeBlack();
           }
 
-          stopWhiteTimer.value = cleanWhite;
-          stopBlackTimer.value = cleanBlack;
           pauseWhiteTimer.value = pauseWhite;
           pauseBlackTimer.value = pauseBlack;
           resumeWhiteTimer.value = resumeWhite;
@@ -866,15 +853,13 @@ onMounted(() => {
     // we update the peer clock : we don't need compensation, as we'll be notified anyway if he lost on time
     else {
       const {
-        clean: cleanWhite,
         pause: pauseWhite,
         resume: resumeWhite,
-      } = useIntervalFn(handleTimerTick, 500, {immediate: false});
+      } = useIntervalFn(handleTimerTick, 500, { immediate: false });
       const {
-        clean: cleanBlack,
         pause: pauseBlack,
         resume: resumeBlack,
-      } = useIntervalFn(handleTimerTick, 500, {immediate: false});
+      } = useIntervalFn(handleTimerTick, 500, { immediate: false });
 
       // starts the right timer
       if (whiteTurn.value) {
@@ -883,8 +868,6 @@ onMounted(() => {
         resumeBlack();
       }
 
-      stopWhiteTimer.value = cleanWhite;
-      stopBlackTimer.value = cleanBlack;
       pauseWhiteTimer.value = pauseWhite;
       pauseBlackTimer.value = pauseBlack;
       resumeWhiteTimer.value = resumeWhite;
@@ -1092,7 +1075,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   font-size: xx-large;
 }
 
