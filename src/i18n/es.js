@@ -57,6 +57,7 @@ export default {
       includeTime: "¿Jugar con el reloj?",
       includeTimeYes: "Sí",
       includeTimeNo: "No",
+      timeSetToZero: "¡Diste un tiempo de cero (sin el incremento)!"
     },
     giveUp: {
       title: "¿Abandonar?",

@@ -59,6 +59,7 @@ export default {
       includeTime: "Jouer avec la pendule ?",
       includeTimeYes: "Oui",
       includeTimeNo: "Non",
+      timeSetToZero: "Vous avez donné un temps de 0 (sans compter l'incrément) !"
     },
     giveUp: {
       title: "Abandonner ?",

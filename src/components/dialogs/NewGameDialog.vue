@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { notify } from "@kyvg/vue3-notification";
 const { t } = useI18n();
 import { DEFAULT_POSITION } from "chess.js";
 
@@ -16,6 +17,10 @@ const timeSeconds = ref(0);
 const incrementSeconds = ref(0);
 
 function startNewGame() {
+  if (includeTime.value && timeMinutes.value === 0 && timeSeconds.value === 0) {
+    notify(t("pages.newGame.timeSetToZero"))
+    return;
+  }
   const newGameData = {
     startPosition: currentPosition.value,
     withWhiteSide: withWhiteSide.value,
