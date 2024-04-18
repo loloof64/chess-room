@@ -30,6 +30,7 @@ import { openDialog } from "vue3-promise-dialog";
 import {
   tryUpdatingRoom,
   tryReadingRoom,
+  tryDeletingFieldsInRoom,
   subscribeToSingleRoomChange,
 } from "@/lib/roomHandler.js";
 
@@ -298,20 +299,30 @@ async function openNewGameOptionsDialog() {
       withClock,
       clockMinutes,
       clockSeconds,
-      lastMoveSan: undefined,
-      lastMoveFan: undefined,
-      lastMoveStartFile: undefined,
-      lastMoveStartRank: undefined,
-      lastMoveEndFile: undefined,
-      lastMoveEndRank: undefined,
     };
     const roomId = roomStore.roomId;
-    const result = await tryUpdatingRoom({ roomId, newValues });
-    const hasError = result.hasOwnProperty("error");
+    let result = await tryUpdatingRoom({ roomId, newValues });
+    let hasError = result.hasOwnProperty("error");
     if (hasError) {
       alert(t(result.error));
       return;
     }
+
+    const fieldsNames = [
+      "lastMoveSan",
+      "lastMoveFan",
+      "lastMoveStartFile",
+      "lastMoveStartRank",
+      "lastMoveEndFile",
+      "lastMoveEndRank",
+    ];
+    result = await tryDeletingFieldsInRoom({ roomId, fieldsNames });
+    hasError = result.hasOwnProperty("error");
+    if (hasError) {
+      alert(t(result.error));
+      return;
+    }
+
     roomStore.setGameStartedStatus(true);
     gameStore.setStartPosition(startPosition);
     gameStore.setWithClock(withClock);
@@ -390,6 +401,7 @@ function handleEventInDb(roomDocument) {
         boardReversed.value = boardShouldBeReversed;
         startNewGame();
       }
+
       // try to play lastMoveSan
       const success = board.value.playManualMove(
         moveCoordinatesToLongUciNotation({

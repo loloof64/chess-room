@@ -6,6 +6,7 @@ import {
   updateDoc,
   doc,
   getDoc,
+  deleteField,
 } from "firebase/firestore";
 import db from "@/lib/firebase.js";
 import { useRoomStore } from "@/stores/RoomStore.js";
@@ -148,6 +149,38 @@ async function tryReadingRoom({ roomId }) {
   }
 }
 
+async function tryDeletingFieldsInRoom({ roomId, fieldsNames }) {
+  try {
+    const matchingDocumentRef = doc(db, "rooms", roomId);
+    const matchingDocument = await getDoc(matchingDocumentRef);
+
+    const noMatchingRoom = !matchingDocument.exists();
+    if (noMatchingRoom) {
+      console.error("No matching room when trying to update!");
+      return {
+        error: "page.generic.errors.failedDeletingFieldsFromRoom",
+        isFatalError: true,
+      };
+    }
+
+    let newValues = {};
+    for (const field of fieldsNames) {
+      newValues[field] = deleteField();
+    }
+
+    await updateDoc(matchingDocumentRef, newValues);
+
+    return { isOk: true };
+  } catch (error) {
+    console.error(error);
+    return {
+      error: "pages.generic.errors.failedDeletingFieldsFromRoom",
+      isFatalError: true,
+    };
+  }
+}
+
+
 export {
   tryCreatingRoom,
   tryJoiningRoom,
@@ -155,4 +188,5 @@ export {
   tryReadingRoom,
   subscribeToAllRoomsChange,
   subscribeToSingleRoomChange,
+  tryDeletingFieldsInRoom
 };

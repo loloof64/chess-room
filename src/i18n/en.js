@@ -81,6 +81,7 @@ export default {
       errors: {
         failedUpdatingRoom: "Failed to update room in database !",
         failedReadingRoom: "Failed to read room from database !",
+        failedDeletingFieldsFromRoom: "Failed to delete fields in room in database !"
       },
     },
   },

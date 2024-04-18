@@ -85,6 +85,7 @@ export default {
           "Échec de mise à jour du salon dans la base de données !",
         failedReadingRoom:
           "Échec de lecture du salon depuis la base de données !",
+          failedDeletingFieldsFromRoom: "Échec de suppression de données du salon dans la base de données !"
       },
     },
   },
