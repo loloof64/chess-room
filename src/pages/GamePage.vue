@@ -397,16 +397,19 @@ async function openGiveUpGameDialog() {
   }
 }
 
-function moveCoordinatesToLongUciNotation(coodinates) {
+function moveCoordinatesToLongUciNotation(coordinates) {
   const firstFile = String.fromCharCode(
-    "a".charCodeAt(0) + coodinates.startFile
+    "a".charCodeAt(0) + coordinates.startFile
   );
   const firstRank = String.fromCharCode(
-    "1".charCodeAt(0) + coodinates.startRank
+    "1".charCodeAt(0) + coordinates.startRank
   );
-  const endFile = String.fromCharCode("a".charCodeAt(0) + coodinates.endFile);
-  const endRank = String.fromCharCode("1".charCodeAt(0) + coodinates.endRank);
-  return `${firstFile}${firstRank}${endFile}${endRank}`;
+  const endFile = String.fromCharCode("a".charCodeAt(0) + coordinates.endFile);
+  const endRank = String.fromCharCode("1".charCodeAt(0) + coordinates.endRank);
+  const promotion = coordinates.promotion;
+  return promotion
+    ? `${firstFile}${firstRank}${endFile}${endRank}${promotion}`
+    : `${firstFile}${firstRank}${endFile}${endRank}`;
 }
 
 function handleEventInDb(roomDocument) {
