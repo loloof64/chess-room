@@ -416,9 +416,6 @@ function handleEventInDb(roomDocument) {
         */
         return;
       }
-      if (withClock.value) {
-        toggleClockSide();
-      }
       gameStore.setLastMoveArrow({
         start: {
           file: documentData.lastMoveStartFile,
