@@ -440,7 +440,7 @@ function handleEventInDb(roomDocument) {
         : giveUpSide === hostGaveUp;
       const otherPeerLostOnTime = weAreHost.value
         ? lostOnTimeoutSide === guestLostOnTime
-        : hostLostOnTime;
+        : lostOnTimeoutSide === hostLostOnTime;
       if (otherPeerInitiatedGiveUp) {
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
