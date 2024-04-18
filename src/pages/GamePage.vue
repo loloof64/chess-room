@@ -106,6 +106,8 @@ function toggleClockSide() {
   if (!gameStarted.value) return;
   if (!withClock.value) return;
 
+  whiteClockSide.value = !whiteClockSide.value;
+
   if (whiteTurn.value) {
     pauseWhiteTimer.value();
     resumeBlackTimer.value();
@@ -114,7 +116,6 @@ function toggleClockSide() {
     resumeWhiteTimer.value();
   }
 
-  whiteClockSide.value = !whiteClockSide.value;
 }
 
 function updatePgnLogic() {
@@ -169,18 +170,14 @@ async function setGameOverByTime() {
 }
 
 function handleTimerTick() {
-  const currentRemainingTicks = whiteClockSide.value
-    ? gameStore.remainingWhiteTicks
-    : gameStore.remainingBlackTicks;
-  const newRemainingTicks = currentRemainingTicks - 1;
-  whiteClockSide
-    ? gameStore.setRemainingWhiteTicks(newRemainingTicks)
-    : gameStore.setRemainingBlackTicks(newRemainingTicks);
+  whiteClockSide.value
+    ? gameStore.setRemainingWhiteTicks(remainingWhiteTicks.value - 1)
+    : gameStore.setRemainingBlackTicks(remainingBlackTicks.value - 1);
 
   // we only handle game lost on time for us, letting the other peer notifying us for his game lost on time
   const weHaveNoMoreTime =
-    (weHaveWhite.value && gameStore.remainingWhiteTicks <= 0) ||
-    (!weHaveWhite.value && gameStore.remainingBlackTicks <= 0);
+    (weHaveWhite.value && remainingWhiteTicks.value <= 0) ||
+    (!weHaveWhite.value && remainingBlackTicks.value <= 0);
 
   if (weHaveNoMoreTime) setGameOverByTime();
 }
