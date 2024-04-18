@@ -222,15 +222,6 @@ function startClockIfNeeded() {
   pauseBlackTimer.value = pauseBlack;
   resumeWhiteTimer.value = resumeWhite;
   resumeBlackTimer.value = resumeBlack;
-
-  //////////////////////////////////////////////TODO remove
-  console.log("########################################");
-  console.log(pauseWhiteTimer.value);
-  console.log(pauseBlackTimer.value);
-  console.log(resumeWhiteTimer.value);
-  console.log(resumeBlackTimer.value);
-  console.log("########################################");
-  //////////////////////////////////////////////
 }
 
 async function startNewGame() {
@@ -443,6 +434,13 @@ function handleEventInDb(roomDocument) {
         ? lostOnTimeoutSide === guestLostOnTime
         : lostOnTimeoutSide === hostLostOnTime;
       if (otherPeerInitiatedGiveUp) {
+        if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+        if (pauseBlackTimer.value) pauseBlackTimer.value();
+        pauseWhiteTimer.value = undefined;
+        pauseBlackTimer.value = undefined;
+        resumeWhiteTimer.value = undefined;
+        resumeBlackTimer.value = undefined;
+
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
@@ -452,6 +450,13 @@ function handleEventInDb(roomDocument) {
           text: t("pages.game.outcomes.gaveUp"),
         });
       } else if (otherPeerLostOnTime) {
+        if (pauseWhiteTimer.value) pauseWhiteTimer.value();
+        if (pauseBlackTimer.value) pauseBlackTimer.value();
+        pauseWhiteTimer.value = undefined;
+        pauseBlackTimer.value = undefined;
+        resumeWhiteTimer.value = undefined;
+        resumeBlackTimer.value = undefined;
+
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
@@ -852,14 +857,16 @@ onMounted(() => {
     }
     // we update the peer clock : we don't need compensation, as we'll be notified anyway if he lost on time
     else {
-      const {
-        pause: pauseWhite,
-        resume: resumeWhite,
-      } = useIntervalFn(handleTimerTick, 500, { immediate: false });
-      const {
-        pause: pauseBlack,
-        resume: resumeBlack,
-      } = useIntervalFn(handleTimerTick, 500, { immediate: false });
+      const { pause: pauseWhite, resume: resumeWhite } = useIntervalFn(
+        handleTimerTick,
+        500,
+        { immediate: false }
+      );
+      const { pause: pauseBlack, resume: resumeBlack } = useIntervalFn(
+        handleTimerTick,
+        500,
+        { immediate: false }
+      );
 
       // starts the right timer
       if (whiteTurn.value) {
