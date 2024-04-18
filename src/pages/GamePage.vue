@@ -71,6 +71,7 @@ const {
   remainingBlackSecondsSinceLastMove,
   remainingWhiteSeconds,
   remainingBlackSeconds,
+  increment,
 } = storeToRefs(gameStore);
 
 const pauseClockUpdater = ref();
@@ -162,7 +163,7 @@ async function handleGameOverOnTimeIfNeeded() {
     }
   }
 
-  if (remainingBlackSeconds.value <= 0) { 
+  if (remainingBlackSeconds.value <= 0) {
     if (!weHaveWhite.value) {
       pauseClockUpdater.value();
       notify({ text: t("pages.game.outcomes.userLostOnTime") });
@@ -260,6 +261,7 @@ async function startNewGame() {
     withClock,
     clockMinutes,
     clockSeconds,
+    incrementSeconds,
   } = result.matchingDocument;
   const startPositionParts = startPosition.split(" ");
   const moveNumber = parseInt(startPositionParts[5]);
@@ -274,6 +276,7 @@ async function startNewGame() {
   gameStore.setRemainingBlackSecondsSinceLastMove(totalSeconds);
   gameStore.setRemainingWhiteSeconds(totalSeconds);
   gameStore.setRemainingBlackSeconds(totalSeconds);
+  gameStore.setIncrement(incrementSeconds);
   resumeClockUpdater.value();
   board.value.newGame(startPosition);
   gameStore.setCurrentPosition(startPosition);
@@ -309,6 +312,7 @@ async function openNewGameOptionsDialog() {
     withClock,
     clockMinutes,
     clockSeconds,
+    incrementSeconds,
   } = result;
 
   const remainingSecondsPerSide = clockMinutes * 60 + clockSeconds;
@@ -324,6 +328,7 @@ async function openNewGameOptionsDialog() {
       withClock,
       clockMinutes,
       clockSeconds,
+      incrementSeconds,
       turnStartDate: newTurnStartDate,
       remainingWhiteSecondsSinceLastMove: remainingSecondsPerSide,
       remainingBlackSecondsSinceLastMove: remainingSecondsPerSide,
@@ -434,6 +439,7 @@ function handleEventInDb(roomDocument) {
         gameStore.setRemainingBlackSeconds(
           documentData.remainingBlackSecondsSinceLastMove
         );
+        gameStore.setIncrement(documentData.incrementSeconds);
         boardReversed.value = boardShouldBeReversed;
         startNewGame();
       }
@@ -515,8 +521,12 @@ async function handleMoveDone(
   promotion
 ) {
   const newTurnStartDate = new Date().toISOString();
-  gameStore.setRemainingWhiteSecondsSinceLastMove(remainingWhiteSeconds.value);
-  gameStore.setRemainingBlackSecondsSinceLastMove(remainingBlackSeconds.value);
+  gameStore.setRemainingWhiteSecondsSinceLastMove(
+    remainingWhiteSeconds.value + (whiteTurn ? increment.value : 0)
+  );
+  gameStore.setRemainingBlackSecondsSinceLastMove(
+    remainingBlackSeconds.value + (whiteTurn ? 0 : increment.value)
+  );
   gameStore.setTurnStartDate(newTurnStartDate);
   history.value.addNodeOrCompleteFirst({
     number: moveNumber,
@@ -543,10 +553,12 @@ async function handleMoveDone(
     lastMoveEndRank: move.end.rank,
     lastMovePromotion: promotion,
     turnStartDate: newTurnStartDate,
-    remainingWhiteSecondsSinceLastMove:
-      remainingWhiteSecondsSinceLastMove.value,
-    remainingBlackSecondsSinceLastMove:
-      remainingBlackSecondsSinceLastMove.value,
+    remainingWhiteSecondsSinceLastMove: whiteTurn
+      ? remainingWhiteSeconds.value + increment.value
+      : remainingWhiteSecondsSinceLastMove.value,
+    remainingBlackSecondsSinceLastMove: !whiteTurn
+      ? remainingBlackSeconds.value + increment.value
+      : remainingBlackSecondsSinceLastMove.value,
   };
   const roomId = roomStore.roomId;
   const result = await tryUpdatingRoom({ roomId, newValues });

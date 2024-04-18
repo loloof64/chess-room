@@ -53,6 +53,7 @@ export default {
       hasWhiteNo: "No",
       minutes: "minutes",
       seconds: "seconds",
+      increment: "increment (s)",
       includeTime: "Play with clock ?",
       includeTimeYes: "Yes",
       includeTimeNo: "No",

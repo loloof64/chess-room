@@ -57,6 +57,7 @@ export const useGameStore = defineStore("GameStore", {
         "GameStore$remainingBlackSeconds",
         0
       ),
+      increment: useSessionStorage("GameStore$increment", 0),
     };
   },
   actions: {
@@ -112,6 +113,9 @@ export const useGameStore = defineStore("GameStore", {
     setRemainingBlackSeconds(newValue) {
       this.remainingBlackSeconds = newValue;
     },
+    setIncrement(newValue) {
+      this.increment = newValue;
+    }
   },
   persist: sessionStorage,
 });

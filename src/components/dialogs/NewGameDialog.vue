@@ -13,6 +13,7 @@ const withWhiteSide = ref(true);
 const includeTime = ref(true);
 const timeMinutes = ref(5);
 const timeSeconds = ref(0);
+const incrementSeconds = ref(0);
 
 function startNewGame() {
   const newGameData = {
@@ -21,6 +22,7 @@ function startNewGame() {
     withClock: includeTime.value,
     clockMinutes: timeMinutes.value,
     clockSeconds: timeSeconds.value,
+    incrementSeconds: incrementSeconds.value,
   };
   closeDialog(newGameData);
 }
@@ -118,9 +120,8 @@ defineExpose({
               id="timeMinutes"
               name="timeMinutes"
               min="0"
-              max="60"
+              max="59"
               v-model="timeMinutes"
-              @change="handleTimeMinutesChange"
             />
             <label for="timeMinutes">{{ t("pages.newGame.minutes") }}</label>
             <input
@@ -128,11 +129,19 @@ defineExpose({
               id="timeSeconds"
               name="timeSeconds"
               min="0"
-              max="60"
+              max="59"
               v-model="timeSeconds"
-              @change="handleTimeSecondsChange"
             />
             <label for="timeSeconds">{{ t("pages.newGame.seconds") }}</label>
+            <input
+              type="number"
+              id="incrementSeconds"
+              name="incrementSeconds"
+              min="0"
+              max="59"
+              v-model="incrementSeconds"
+            />
+            <label for="incrementSeconds">{{ t("pages.newGame.increment") }}</label>
           </div>
           <div id="button">
             <button class="ok" @click="startNewGame">
@@ -164,7 +173,7 @@ defineExpose({
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 60%;
+  width: 75%;
   transform: translate(-50%, -50%);
   background-color: white;
   padding: 20px;
@@ -223,5 +232,11 @@ button:has(> img) {
 
 .field > * {
   margin: 3px;
+}
+
+@media (max-width: 850px) {
+  .mainZone {
+    flex-direction: column;
+  }
 }
 </style>

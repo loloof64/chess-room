@@ -55,6 +55,7 @@ export default {
       hasWhiteNo: "Non",
       minutes: "minutes",
       seconds: "secondes",
+      increment: "incrément (s)",
       includeTime: "Jouer avec la pendule ?",
       includeTimeYes: "Oui",
       includeTimeNo: "Non",
