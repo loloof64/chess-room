@@ -21,27 +21,42 @@ export const useGameStore = defineStore("GameStore", {
         "GameStore$blackPlayerIsHuman",
         false
       ),
-      weHaveWhite: useSessionStorage("GameStore$weHaveWhite", undefined),
+      weHaveWhite: useSessionStorage("GameStore$weHaveWhite", true),
       whiteNickname: useSessionStorage("GameStore$whiteNickname", ""),
       blackNickname: useSessionStorage("GameStore$blackNickname", ""),
       boardReversed: useSessionStorage("GameStore$boardReversed", false),
       historyNodes: useSessionStorage("GameStore$historyNodes", []),
       lastMoveArrow: useSessionStorage("GameStore$lastMoveArrow", {
         start: {
-          file: -Infinity,
-          rank: -Infinity,
+          file: -100,
+          rank: -100,
         },
         end: {
-          file: -Infinity,
-          rank: -Infinity,
+          file: -100,
+          rank: -100,
         },
       }),
       withClock: useSessionStorage("GameStore$withClock", false),
-      timeMinutes: useSessionStorage("GameStore$timeMinutes", 5),
-      timeSeconds: useSessionStorage("GameStore$timeSeconds", 0),
-      remainingWhiteTicks: useSessionStorage("GameStore$remainingWhiteTicks", 999),
-      remainingBlackTicks: useSessionStorage("GameStore$remainingBlackTicks", 999),
-      whiteClockSide: useSessionStorage("GameStore$whiteClockSide", true),
+      turnStartDate: useSessionStorage(
+        "GameStore$turnStartDate",
+        new Date().toISOString()
+      ),
+      remainingWhiteSecondsSinceLastMove: useSessionStorage(
+        "GameStore$remainingWhiteSecondsSinceLastMove",
+        0
+      ),
+      remainingBlackSecondsSinceLastMove: useSessionStorage(
+        "GameStore$remainingBlackSecondsSinceLastMove",
+        0
+      ),
+      remainingWhiteSeconds: useSessionStorage(
+        "GameStore$remainingWhiteSeconds",
+        0
+      ),
+      remainingBlackSeconds: useSessionStorage(
+        "GameStore$remainingBlackSeconds",
+        0
+      ),
     };
   },
   actions: {
@@ -67,8 +82,8 @@ export const useGameStore = defineStore("GameStore", {
       this.boardReversed = newStatus;
     },
     setHistoryNodes(newArray) {
-      // Clones the given array instead of getting references 
-      this.historyNodes = newArray.map(e => e);
+      // Clones the given array instead of getting references
+      this.historyNodes = newArray.map((e) => e);
     },
     addHistoryNode(nodeToAdd) {
       this.historyNodes.push(nodeToAdd);
@@ -82,21 +97,21 @@ export const useGameStore = defineStore("GameStore", {
     setWithClock(newValue) {
       this.withClock = newValue;
     },
-    setTimeMinutes(newValue) {
-      this.timeMinutes = newValue;
+    setTurnStartDate(newValue) {
+      this.turnStartDate = newValue;
     },
-    setTimeSeconds(newValue) {
-      this.timeSeconds = newValue;
+    setRemainingWhiteSecondsSinceLastMove(newValue) {
+      this.remainingWhiteSecondsSinceLastMove = newValue;
     },
-    setRemainingWhiteTicks(newValue) {
-      this.remainingWhiteTicks = newValue;
+    setRemainingBlackSecondsSinceLastMove(newValue) {
+      this.remainingBlackSecondsSinceLastMove = newValue;
     },
-    setRemainingBlackTicks(newValue) {
-      this.remainingBlackTicks = newValue;
+    setRemainingWhiteSeconds(newValue) {
+      this.remainingWhiteSeconds = newValue;
     },
-    setWhiteClockSideStatus(newValue) {
-      this.whiteClockSide = newValue;
-    }
+    setRemainingBlackSeconds(newValue) {
+      this.remainingBlackSeconds = newValue;
+    },
   },
   persist: sessionStorage,
 });

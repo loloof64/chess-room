@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
-import { useIntervalFn } from "@vueuse/core";
 import { notify } from "@kyvg/vue3-notification";
+import { useIntervalFn } from "@vueuse/core";
 import { sleep } from "../utils";
 import { Chess } from "chess.js";
-import { format } from "date-fns";
+import { format, differenceInSeconds } from "date-fns";
 
 import {
   noGiveUp,
@@ -47,14 +47,10 @@ let pgnLogic = new Chess();
 
 const roomSubscription = ref();
 
-const boardSize = ref("100");
+const boardSize = ref(100);
 const board = ref();
 const history = ref();
 const boardReversed = ref(false);
-const pauseWhiteTimer = ref();
-const pauseBlackTimer = ref();
-const resumeWhiteTimer = ref();
-const resumeBlackTimer = ref();
 
 const atLeastAGameStarted = ref(false);
 
@@ -70,21 +66,22 @@ const {
   blackNickname,
   weHaveWhite,
   withClock,
-  whiteClockSide,
-  timeMinutes,
-  timeSeconds,
-  remainingWhiteTicks,
-  remainingBlackTicks,
+  turnStartDate,
+  remainingWhiteSecondsSinceLastMove,
+  remainingBlackSecondsSinceLastMove,
+  remainingWhiteSeconds,
+  remainingBlackSeconds,
 } = storeToRefs(gameStore);
+
+const pauseClockUpdater = ref();
+const resumeClockUpdater = ref();
 
 const whiteTurn = computed(() => currentPosition.value.split(" ")[1] === "w");
 
-const unsubscribeCheckNewGameStarted = ref();
-
-function ticksToTime(ticks) {
-  const totalSeconds = Math.floor(ticks / 2);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
+function remainingSecondsToRemainingTimeString(remainingSeconds) {
+  if (remainingSeconds < 0) remainingSeconds = 0;
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
 
   let minutesStr = "" + minutes;
   if (minutesStr.length < 2) {
@@ -99,23 +96,16 @@ function ticksToTime(ticks) {
   return minutesStr + ":" + secondsStr;
 }
 
-const whiteTime = computed(() => ticksToTime(remainingWhiteTicks.value));
-const blackTime = computed(() => ticksToTime(remainingBlackTicks.value));
+const whiteTime = computed(() =>
+  remainingSecondsToRemainingTimeString(remainingWhiteSeconds.value)
+);
+const blackTime = computed(() =>
+  remainingSecondsToRemainingTimeString(remainingBlackSeconds.value)
+);
 
-function toggleClockSide() {
-  if (!gameStarted.value) return;
-  if (!withClock.value) return;
-
-  whiteClockSide.value = !whiteClockSide.value;
-
-  if (whiteTurn.value) {
-    pauseWhiteTimer.value();
-    resumeBlackTimer.value();
-  } else {
-    pauseBlackTimer.value();
-    resumeWhiteTimer.value();
-  }
-
+function elapsedTimeSecondsSinceLastMove() {
+  const now = new Date().toISOString();
+  return differenceInSeconds(now, turnStartDate.value);
 }
 
 function updatePgnLogic() {
@@ -139,48 +129,112 @@ function updatePgnLogic() {
   );
 }
 
-async function setGameOverByTime() {
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+async function handleGameOverOnTimeIfNeeded() {
+  if (!gameStarted.value) return;
+  if (!withClock.value) return;
 
-  notify({ text: t("pages.game.outcomes.userLostOnTime") });
-
-  const newValues = {
-    gameStarted: false,
-    lostOnTimeoutSide: weAreHost.value ? hostLostOnTime : guestLostOnTime,
-  };
   const roomId = roomStore.roomId;
-  const result = await tryUpdatingRoom({ roomId, newValues });
+
+  if (remainingWhiteSeconds.value <= 0) {
+    if (weHaveWhite.value) {
+      pauseClockUpdater.value();
+      notify({ text: t("pages.game.outcomes.userLostOnTime") });
+      const newValues = {
+        gameStarted: false,
+        lostOnTimeoutSide: weAreHost.value ? hostLostOnTime : guestLostOnTime,
+      };
+      let result = await tryUpdatingRoom({ roomId, newValues });
+      let hasError = result.hasOwnProperty("error");
+      if (hasError) {
+        alert(t(result.error));
+        return;
+      }
+
+      roomStore.setGameStartedStatus(false);
+      board.value.stop();
+      gameStore.setWhitePlayerIsHuman(false);
+      gameStore.setBlackPlayerIsHuman(false);
+
+      updatePgnLogic();
+      history.value.activateNavigationMode();
+
+      return;
+    }
+  }
+
+  if (remainingBlackSeconds.value <= 0) { 
+    if (!weHaveWhite.value) {
+      pauseClockUpdater.value();
+      notify({ text: t("pages.game.outcomes.userLostOnTime") });
+      const newValues = {
+        gameStarted: false,
+        lostOnTimeoutSide: weAreHost.value ? hostLostOnTime : guestLostOnTime,
+      };
+      let result = await tryUpdatingRoom({ roomId, newValues });
+      let hasError = result.hasOwnProperty("error");
+      if (hasError) {
+        alert(t(result.error));
+        return;
+      }
+
+      roomStore.setGameStartedStatus(false);
+      board.value.stop();
+      gameStore.setWhitePlayerIsHuman(false);
+      gameStore.setBlackPlayerIsHuman(false);
+
+      updatePgnLogic();
+      history.value.activateNavigationMode();
+
+      return;
+    }
+  }
+}
+
+function updateClock() {
+  if (!gameStarted.value) return;
+  if (!withClock.value) return;
+
+  const elapsedTimeSeconds = elapsedTimeSecondsSinceLastMove();
+  gameStore.setRemainingWhiteSeconds(
+    remainingWhiteSecondsSinceLastMove.value -
+      (whiteTurn.value ? elapsedTimeSeconds : 0)
+  );
+  gameStore.setRemainingBlackSeconds(
+    remainingBlackSecondsSinceLastMove.value -
+      (whiteTurn.value ? 0 : elapsedTimeSeconds)
+  );
+
+  handleGameOverOnTimeIfNeeded();
+}
+
+onMounted(async () => {
+  const roomId = roomStore.roomId;
+  const result = await tryReadingRoom({ roomId });
   const hasError = result.hasOwnProperty("error");
   if (hasError) {
     alert(t(result.error));
     return;
   }
-  roomStore.setGameStartedStatus(false);
-  board.value.stop();
-  gameStore.setWhitePlayerIsHuman(false);
-  gameStore.setBlackPlayerIsHuman(false);
+  const {
+    turnStartDate,
+    remainingWhiteSecondsSinceLastMove,
+    remainingBlackSecondsSinceLastMove,
+  } = result.matchingDocument;
+  gameStore.setTurnStartDate(turnStartDate);
+  gameStore.setRemainingWhiteSecondsSinceLastMove(
+    remainingWhiteSecondsSinceLastMove
+  );
+  gameStore.setRemainingBlackSecondsSinceLastMove(
+    remainingBlackSecondsSinceLastMove
+  );
+  const { pause, resume } = useIntervalFn(updateClock, 30, {
+    immediate: true,
+  });
+  pauseClockUpdater.value = pause;
+  resumeClockUpdater.value = resume;
+});
 
-  updatePgnLogic();
-  history.value.activateNavigationMode();
-}
-
-function handleTimerTick() {
-  whiteClockSide.value
-    ? gameStore.setRemainingWhiteTicks(remainingWhiteTicks.value - 1)
-    : gameStore.setRemainingBlackTicks(remainingBlackTicks.value - 1);
-
-  // we only handle game lost on time for us, letting the other peer notifying us for his game lost on time
-  const weHaveNoMoreTime =
-    (weHaveWhite.value && remainingWhiteTicks.value <= 0) ||
-    (!weHaveWhite.value && remainingBlackTicks.value <= 0);
-
-  if (weHaveNoMoreTime) setGameOverByTime();
-}
+const unsubscribeCheckNewGameStarted = ref();
 
 function resizeBoard() {
   const minSize =
@@ -188,38 +242,6 @@ function resizeBoard() {
       ? window.innerWidth
       : window.innerHeight;
   boardSize.value = `${minSize * 0.8}`;
-}
-
-function startClockIfNeeded() {
-  if (!withClock.value) return;
-  const startsWithWhiteSide = currentPosition.value.split(" ")[1] === "w";
-  const totalTimeSeconds = timeMinutes.value * 60 + timeSeconds.value;
-  gameStore.setRemainingWhiteTicks(totalTimeSeconds * 2);
-  gameStore.setRemainingBlackTicks(totalTimeSeconds * 2);
-  gameStore.setWhiteClockSideStatus(startsWithWhiteSide);
-
-  const { pause: pauseWhite, resume: resumeWhite } = useIntervalFn(
-    handleTimerTick,
-    500,
-    { immediate: false }
-  );
-  const { pause: pauseBlack, resume: resumeBlack } = useIntervalFn(
-    handleTimerTick,
-    500,
-    { immediate: false }
-  );
-
-  // starts the right timer
-  if (whiteTurn.value) {
-    resumeWhite();
-  } else {
-    resumeBlack();
-  }
-
-  pauseWhiteTimer.value = pauseWhite;
-  pauseBlackTimer.value = pauseBlack;
-  resumeWhiteTimer.value = resumeWhite;
-  resumeBlackTimer.value = resumeBlack;
 }
 
 async function startNewGame() {
@@ -247,8 +269,12 @@ async function startNewGame() {
 
   gameStore.setStartPosition(startPosition);
   gameStore.setWithClock(withClock);
-  gameStore.setTimeMinutes(clockMinutes);
-  gameStore.setTimeSeconds(clockSeconds);
+  const totalSeconds = clockMinutes * 60 + clockSeconds;
+  gameStore.setRemainingWhiteSecondsSinceLastMove(totalSeconds);
+  gameStore.setRemainingBlackSecondsSinceLastMove(totalSeconds);
+  gameStore.setRemainingWhiteSeconds(totalSeconds);
+  gameStore.setRemainingBlackSeconds(totalSeconds);
+  resumeClockUpdater.value();
   board.value.newGame(startPosition);
   gameStore.setCurrentPosition(startPosition);
   const hostPlaysWithWhiteSide = [true, "true"].includes(hostHasWhite);
@@ -265,16 +291,14 @@ async function startNewGame() {
 
   gameStore.setLastMoveArrow({
     start: {
-      file: -Infinity,
-      rank: -Infinity,
+      file: -100,
+      rank: -100,
     },
     end: {
-      file: -Infinity,
-      rank: -Infinity,
+      file: -100,
+      rank: -100,
     },
   });
-
-  startClockIfNeeded();
 }
 
 async function openNewGameOptionsDialog() {
@@ -286,7 +310,11 @@ async function openNewGameOptionsDialog() {
     clockMinutes,
     clockSeconds,
   } = result;
+
+  const remainingSecondsPerSide = clockMinutes * 60 + clockSeconds;
+
   if (result) {
+    const newTurnStartDate = new Date().toISOString();
     const newValues = {
       gameStarted: true,
       giveUpSide: noGiveUp,
@@ -296,7 +324,13 @@ async function openNewGameOptionsDialog() {
       withClock,
       clockMinutes,
       clockSeconds,
+      turnStartDate: newTurnStartDate,
+      remainingWhiteSecondsSinceLastMove: remainingSecondsPerSide,
+      remainingBlackSecondsSinceLastMove: remainingSecondsPerSide,
     };
+
+    gameStore.setTurnStartDate(newTurnStartDate);
+
     const roomId = roomStore.roomId;
     let result = await tryUpdatingRoom({ roomId, newValues });
     let hasError = result.hasOwnProperty("error");
@@ -323,8 +357,6 @@ async function openNewGameOptionsDialog() {
     roomStore.setGameStartedStatus(true);
     gameStore.setStartPosition(startPosition);
     gameStore.setWithClock(withClock);
-    gameStore.setTimeMinutes(clockMinutes);
-    gameStore.setTimeSeconds(clockSeconds);
     const weAreHost = roomStore.roomOwner;
     const boardShouldBeReversed =
       (withWhiteSide && !weAreHost) || (!withWhiteSide && weAreHost);
@@ -338,13 +370,7 @@ async function openGiveUpGameDialog() {
   const result = await openDialog(GiveUpGameDialog, {});
   const weAreHost = [true, "true"].includes(roomStore.roomOwner);
   if (result) {
-    if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-    if (pauseBlackTimer.value) pauseBlackTimer.value();
-    pauseWhiteTimer.value = undefined;
-    pauseBlackTimer.value = undefined;
-    resumeWhiteTimer.value = undefined;
-    resumeBlackTimer.value = undefined;
-
+    if (pauseClockUpdater.value) pauseClockUpdater.value();
     const newValues = {
       gameStarted: false,
       giveUpSide: weAreHost ? hostGaveUp : guestGaveUp,
@@ -395,6 +421,19 @@ function handleEventInDb(roomDocument) {
           (!documentData.hostHasWhite && documentData.roomOwner);
         roomStore.setGameStartedStatus(true);
         gameStore.setBoardReversedStatus(boardShouldBeReversed);
+        gameStore.setTurnStartDate(documentData.turnStartDate);
+        gameStore.setRemainingWhiteSecondsSinceLastMove(
+          documentData.remainingWhiteSecondsSinceLastMove
+        );
+        gameStore.setRemainingBlackSecondsSinceLastMove(
+          documentData.remainingBlackSecondsSinceLastMove
+        );
+        gameStore.setRemainingWhiteSeconds(
+          documentData.remainingWhiteSecondsSinceLastMove
+        );
+        gameStore.setRemainingBlackSeconds(
+          documentData.remainingBlackSecondsSinceLastMove
+        );
         boardReversed.value = boardShouldBeReversed;
         startNewGame();
       }
@@ -440,13 +479,6 @@ function handleEventInDb(roomDocument) {
         ? lostOnTimeoutSide === guestLostOnTime
         : lostOnTimeoutSide === hostLostOnTime;
       if (otherPeerInitiatedGiveUp) {
-        if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-        if (pauseBlackTimer.value) pauseBlackTimer.value();
-        pauseWhiteTimer.value = undefined;
-        pauseBlackTimer.value = undefined;
-        resumeWhiteTimer.value = undefined;
-        resumeBlackTimer.value = undefined;
-
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
@@ -456,13 +488,6 @@ function handleEventInDb(roomDocument) {
           text: t("pages.game.outcomes.gaveUp"),
         });
       } else if (otherPeerLostOnTime) {
-        if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-        if (pauseBlackTimer.value) pauseBlackTimer.value();
-        pauseWhiteTimer.value = undefined;
-        pauseBlackTimer.value = undefined;
-        resumeWhiteTimer.value = undefined;
-        resumeBlackTimer.value = undefined;
-
         roomStore.setGameStartedStatus(false);
         gameStore.setWhitePlayerIsHuman(false);
         gameStore.setBlackPlayerIsHuman(false);
@@ -489,9 +514,10 @@ async function handleMoveDone(
   move,
   promotion
 ) {
-  if (withClock.value) {
-    toggleClockSide();
-  }
+  const newTurnStartDate = new Date().toISOString();
+  gameStore.setRemainingWhiteSecondsSinceLastMove(remainingWhiteSeconds.value);
+  gameStore.setRemainingBlackSecondsSinceLastMove(remainingBlackSeconds.value);
+  gameStore.setTurnStartDate(newTurnStartDate);
   history.value.addNodeOrCompleteFirst({
     number: moveNumber,
     whiteTurn,
@@ -507,6 +533,29 @@ async function handleMoveDone(
   // Wait for the history component to update
   await sleep(10);
 
+  // Notify about move done in database
+  const newValues = {
+    lastMoveSan: moveSan,
+    lastMoveFan: moveFan,
+    lastMoveStartFile: move.start.file,
+    lastMoveStartRank: move.start.rank,
+    lastMoveEndFile: move.end.file,
+    lastMoveEndRank: move.end.rank,
+    lastMovePromotion: promotion,
+    turnStartDate: newTurnStartDate,
+    remainingWhiteSecondsSinceLastMove:
+      remainingWhiteSecondsSinceLastMove.value,
+    remainingBlackSecondsSinceLastMove:
+      remainingBlackSecondsSinceLastMove.value,
+  };
+  const roomId = roomStore.roomId;
+  const result = await tryUpdatingRoom({ roomId, newValues });
+  const hasError = result.hasOwnProperty("error");
+  if (hasError) {
+    alert(t(result.error));
+    return;
+  }
+
   history.value.scrollToLastElement();
   const historyNodesCount = history.value.getNodesCount();
   const lastHistoryNode = history.value.getLastNode;
@@ -517,35 +566,12 @@ async function handleMoveDone(
   }
   gameStore.setLastMoveArrow(move);
   currentPosition.value = resultingPosition;
-
-  // Notify about move done in database
-  const newValues = {
-    lastMoveSan: moveSan,
-    lastMoveFan: moveFan,
-    lastMoveStartFile: move.start.file,
-    lastMoveStartRank: move.start.rank,
-    lastMoveEndFile: move.end.file,
-    lastMoveEndRank: move.end.rank,
-    lastMovePromotion: promotion,
-  };
-  const roomId = roomStore.roomId;
-  const result = await tryUpdatingRoom({ roomId, newValues });
-  const hasError = result.hasOwnProperty("error");
-  if (hasError) {
-    alert(t(result.error));
-    return;
-  }
 }
 
 async function handleCheckmate() {
   if (!gameStarted.value) return;
 
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+  if (pauseClockUpdater.value) pauseClockUpdater.value();
 
   // let the board and interface update
   await sleep(50);
@@ -574,12 +600,7 @@ async function handleCheckmate() {
 async function handleStalemate() {
   if (!gameStarted.value) return;
 
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+  if (pauseClockUpdater.value) pauseClockUpdater.value();
 
   // let the board and interface update
   await sleep(50);
@@ -608,12 +629,7 @@ async function handleStalemate() {
 async function handlePerpetualDraw() {
   if (!gameStarted.value) return;
 
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+  if (pauseClockUpdater.value) pauseClockUpdater.value();
 
   // let the board and interface update
   await sleep(50);
@@ -642,12 +658,7 @@ async function handlePerpetualDraw() {
 async function handleMissingMaterial() {
   if (!gameStarted.value) return;
 
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+  if (pauseClockUpdater.value) pauseClockUpdater.value();
 
   // let the board and interface update
   await sleep(50);
@@ -676,12 +687,7 @@ async function handleMissingMaterial() {
 async function handleFiftyMovesDraw() {
   if (!gameStarted.value) return;
 
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+  if (pauseClockUpdater.value) pauseClockUpdater.value();
 
   // let the board and interface update
   await sleep(50);
@@ -776,13 +782,9 @@ onMounted(async () => {
     );
   }
 });
+
 onBeforeUnmount(() => {
-  if (pauseWhiteTimer.value) pauseWhiteTimer.value();
-  if (pauseBlackTimer.value) pauseBlackTimer.value();
-  pauseWhiteTimer.value = undefined;
-  pauseBlackTimer.value = undefined;
-  resumeWhiteTimer.value = undefined;
-  resumeBlackTimer.value = undefined;
+  if (pauseClockUpdater.value) pauseClockUpdater.value();
   if (roomSubscription.value) {
     roomSubscription.value();
   }
@@ -815,78 +817,6 @@ onMounted(() => {
     updatePgnLogic();
     history.value.activateNavigationMode();
   }
-
-  const ourTurn =
-    (whiteTurn.value && weHaveWhite.value) ||
-    (!whiteTurn.value && !weHaveWhite.value);
-  const ourRemainingTicks = weHaveWhite.value
-    ? gameStore.remainingWhiteTicks
-    : gameStore.remainingBlackTicks;
-
-  if (gameStarted.value && withClock.value) {
-    if (ourTurn) {
-      if (ourRemainingTicks > 0) {
-        // A compensation
-        const newTicksValue = ourRemainingTicks - 2;
-        weHaveWhite.value
-          ? gameStore.setRemainingWhiteTicks(newTicksValue)
-          : gameStore.setRemainingBlackTicks(newTicksValue);
-        if (newTicksValue <= 0) {
-          setGameOverByTime();
-        } else {
-          const { pause: pauseWhite, resume: resumeWhite } = useIntervalFn(
-            handleTimerTick,
-            500,
-            { immediate: false }
-          );
-          const { pause: pauseBlack, resume: resumeBlack } = useIntervalFn(
-            handleTimerTick,
-            500,
-            { immediate: false }
-          );
-
-          // starts the right timer
-          if (whiteTurn.value) {
-            resumeWhite();
-          } else {
-            resumeBlack();
-          }
-
-          pauseWhiteTimer.value = pauseWhite;
-          pauseBlackTimer.value = pauseBlack;
-          resumeWhiteTimer.value = resumeWhite;
-          resumeBlackTimer.value = resumeBlack;
-        }
-      } else {
-        setGameOverByTime();
-      }
-    }
-    // we update the peer clock : we don't need compensation, as we'll be notified anyway if he lost on time
-    else {
-      const { pause: pauseWhite, resume: resumeWhite } = useIntervalFn(
-        handleTimerTick,
-        500,
-        { immediate: false }
-      );
-      const { pause: pauseBlack, resume: resumeBlack } = useIntervalFn(
-        handleTimerTick,
-        500,
-        { immediate: false }
-      );
-
-      // starts the right timer
-      if (whiteTurn.value) {
-        resumeWhite();
-      } else {
-        resumeBlack();
-      }
-
-      pauseWhiteTimer.value = pauseWhite;
-      pauseBlackTimer.value = pauseBlack;
-      resumeWhiteTimer.value = resumeWhite;
-      resumeBlackTimer.value = resumeBlack;
-    }
-  }
 });
 </script>
 
@@ -895,27 +825,27 @@ onMounted(() => {
     <div id="gameZone">
       <ChessHistory
         ref="history"
-        @requestStartPosition="handleRequestStartPosition"
-        @requestNodeSelected="handleRequestPosition"
+        @request-start-position="handleRequestStartPosition"
+        @request-node-selected="handleRequestPosition"
       />
       <ChessboardVue
         id="board"
         ref="board"
         :size="boardSize"
-        :whitePlayerHuman="whitePlayerIsHuman"
-        :blackPlayerHuman="blackPlayerIsHuman"
+        :white-player-human="whitePlayerIsHuman"
+        :black-player-human="blackPlayerIsHuman"
         :reversed="boardReversed"
-        @moveDone="handleMoveDone"
+        @move-done="handleMoveDone"
         @checkmate="handleCheckmate"
         @stalemate="handleStalemate"
-        @perpetualDraw="handlePerpetualDraw"
-        @missingMaterialDraw="handleMissingMaterial"
-        @fiftyMovesDraw="handleFiftyMovesDraw"
+        @perpetual-draw="handlePerpetualDraw"
+        @missing-material-draw="handleMissingMaterial"
+        @fifty-moves-draw="handleFiftyMovesDraw"
       />
     </div>
     <div id="miscZone">
       <!--clock -->
-      <div class="clock" v-if="withClock">
+      <div v-if="withClock" class="clock">
         <div class="side white">
           {{ whiteTime }}
         </div>
@@ -953,14 +883,14 @@ onMounted(() => {
           <td>
             <p>{{ whiteNickname }}</p>
           </td>
-          <td><img :src="user" v-if="weHaveWhite === true" /></td>
+          <td><img v-if="weHaveWhite === true" :src="user" /></td>
         </tr>
         <tr class="nickname" :class="[whiteTurn ? '' : 'highlight']">
           <td><div class="color black" /></td>
           <td>
             <p>{{ blackNickname }}</p>
           </td>
-          <td><img :src="user" v-if="weHaveWhite === false" /></td>
+          <td><img v-if="weHaveWhite === false" :src="user" /></td>
         </tr>
       </table>
       <!-- nicknames -->
