@@ -72,6 +72,8 @@ export default {
         perpetualDraw: "Nulle par triple répétition !",
         missingMaterial: "Nulle par manque de matériel !",
         fiftyMovesDraw: "Nulle par la règle des 50 coups !",
+        userLostOnTime: "Vous avez perdu au temps !",
+        opponentLostOnTime: "Votre adversaire a perdu au temps !",
       },
     },
     pgn: {
