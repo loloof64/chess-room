@@ -1,6 +1,9 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { sleep } from "../utils";
+
+const props = defineProps(['size']);
+const globalSizePx = computed(() => (props.size || 100) + "px");
 
 import backwardEnd from "@/assets/images/backward_end.svg";
 import backward from "@/assets/images/backward.svg";
@@ -326,7 +329,7 @@ defineExpose({
 
 .root {
   width: 100%;
-  height: 100%;
+  height: v-bind(globalSizePx);
   display: block;
 }
 
@@ -340,7 +343,7 @@ defineExpose({
 }
 
 .toolbar__button {
-  font-size: smaller;
+  font-size: xx-small;
 }
 
 .main-content {

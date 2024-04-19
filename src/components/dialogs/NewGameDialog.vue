@@ -1,28 +1,38 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { notify } from "@kyvg/vue3-notification";
 const { t } = useI18n();
-import { DEFAULT_POSITION } from "chess.js";
 
 import { closeDialog } from "vue3-promise-dialog";
 
-const currentPosition = ref(DEFAULT_POSITION);
-const previewBoard = ref();
-const previewSize = ref("100");
+import EditedValue from "@/components/EditedValue.vue";
+
+const editableBoard = ref();
+const editedValue = ref();
+const previewSize = ref(100);
+const centralSize = ref(100);
 const withWhiteSide = ref(true);
 const includeTime = ref(true);
 const timeMinutes = ref(5);
 const timeSeconds = ref(0);
 const incrementSeconds = ref(0);
 
+onMounted(() => {
+  editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
+});
+
+const generatedPosition = computed(() => {
+  return editableBoard.value.getBoardCode() + " w - - 0 1";
+});
+
 function startNewGame() {
   if (includeTime.value && timeMinutes.value === 0 && timeSeconds.value === 0) {
-    notify(t("pages.newGame.timeSetToZero"))
+    notify(t("pages.newGame.timeSetToZero"));
     return;
   }
   const newGameData = {
-    startPosition: currentPosition.value,
+    startPosition: generatedPosition.value,
     withWhiteSide: withWhiteSide.value,
     withClock: includeTime.value,
     clockMinutes: timeMinutes.value,
@@ -46,13 +56,17 @@ function handleIncludeTimeChange(e) {
   includeTime.value = newValue === "yes";
 }
 
+function handleValueChange() {
+  editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
+}
+
 onMounted(() => {
   const minSize =
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  previewSize.value = `${minSize * 0.2}`;
-  previewBoard.value.newGame(currentPosition.value);
+  previewSize.value = minSize * 0.25;
+  centralSize.value = minSize * 0.05;
 });
 
 defineExpose({
@@ -69,13 +83,28 @@ defineExpose({
         <h2>{{ t("pages.newGame.title") }}</h2>
       </header>
       <section class="mainZone">
-        <ChessboardVue
-          id="previewBoard"
-          ref="previewBoard"
+        <EditableBoardVue
+          id="editableBoard"
+          ref="editableBoard"
           :size="previewSize"
-          :whitePlayerHuman="false"
-          :blackPlayerHuman="false"
+          :white-turn="withWhiteSide"
         />
+        <EditedValue
+          ref="editedValue"
+          @change="handleValueChange"
+          :centralSize="centralSize"
+        />
+        <aside>
+          <div class="buttonsLine">
+            <button>{{ t("pages.newGame.copyFen") }}</button>
+            <button>{{ t("pages.newGame.pasteFen") }}</button>
+          </div>
+          <div class="buttonsLine">
+            <button>{{ t("pages.newGame.resetFen") }}</button>
+            <button>{{ t("pages.newGame.defaultFen") }}</button>
+            <button>{{ t("pages.newGame.clearFen") }}</button>
+          </div>
+        </aside>
         <aside>
           <div class="field">
             {{ t("pages.newGame.hasWhite") }}
@@ -87,7 +116,9 @@ defineExpose({
               checked
               @change="handleGameTurnChange"
             />
-            <label for="hasWhiteYes">{{ t("pages.newGame.hasWhiteYes") }}</label>
+            <label for="hasWhiteYes">{{
+              t("pages.newGame.hasWhiteYes")
+            }}</label>
 
             <input
               type="radio"
@@ -108,7 +139,9 @@ defineExpose({
               checked
               @change="handleIncludeTimeChange"
             />
-            <label for="includeTimeYes">{{ t("pages.newGame.includeTimeYes") }}</label>
+            <label for="includeTimeYes">{{
+              t("pages.newGame.includeTimeYes")
+            }}</label>
 
             <input
               type="radio"
@@ -117,7 +150,9 @@ defineExpose({
               value="no"
               @change="handleIncludeTimeChange"
             />
-            <label for="includeTimeNo">{{ t("pages.newGame.includeTimeNo") }}</label>
+            <label for="includeTimeNo">{{
+              t("pages.newGame.includeTimeNo")
+            }}</label>
           </div>
           <div class="field" v-if="includeTime">
             <input
@@ -146,18 +181,20 @@ defineExpose({
               max="59"
               v-model="incrementSeconds"
             />
-            <label for="incrementSeconds">{{ t("pages.newGame.increment") }}</label>
-          </div>
-          <div id="button">
-            <button class="ok" @click="startNewGame">
-              {{ t("pages.newGame.submit") }}
-            </button>
-            <button class="cancel" @click="cancel">
-              {{ t("pages.newGame.cancel") }}
-            </button>
+            <label for="incrementSeconds">{{
+              t("pages.newGame.increment")
+            }}</label>
           </div>
         </aside>
       </section>
+      <div id="buttons">
+        <button class="ok" @click="startNewGame">
+          {{ t("pages.newGame.submit") }}
+        </button>
+        <button class="cancel" @click="cancel">
+          {{ t("pages.newGame.cancel") }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -222,25 +259,38 @@ button:has(> img) {
 
 .mainZone {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
 .mainZone > aside {
   display: flex;
-  margin: 0 10px;
+  height: 18vh;
+  margin: 20px 10px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow-y: scroll;
+}
+
+.buttonsLine > button {
+  font-size: smaller;
 }
 
 .field > * {
   margin: 3px;
 }
 
-@media (max-width: 850px) {
-  .mainZone {
+.buttonsLine {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+@media (max-width: 1000px) {
+  .buttonsLine {
     flex-direction: column;
   }
 }

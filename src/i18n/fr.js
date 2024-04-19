@@ -59,7 +59,13 @@ export default {
       includeTime: "Jouer avec la pendule ?",
       includeTimeYes: "Oui",
       includeTimeNo: "Non",
-      timeSetToZero: "Vous avez donné un temps de 0 (sans compter l'incrément) !"
+      timeSetToZero: "Vous avez donné un temps de 0 (sans compter l'incrément) !",
+      editStartPosition: "Éditer",
+      copyFen: "Copier FEN",
+      pasteFen: "Coller FEN",
+      resetFen: "Réinitialiser",
+      defaultFen: "Par défaut",
+      clearFen: "Effacer",
     },
     giveUp: {
       title: "Abandonner ?",

@@ -57,7 +57,13 @@ export default {
       includeTime: "¿Jugar con el reloj?",
       includeTimeYes: "Sí",
       includeTimeNo: "No",
-      timeSetToZero: "¡Diste un tiempo de cero (sin el incremento)!"
+      timeSetToZero: "¡Diste un tiempo de cero (sin el incremento)!",
+      editStartPosition: "Editar",
+      copyFen: "Copiar FEN",
+      pasteFen: "Pegar FEN",
+      resetFen: "Reiniciar",
+      defaultFen: "Por defecto",
+      clearFen: "Borrar",
     },
     giveUp: {
       title: "¿Abandonar?",
@@ -84,7 +90,8 @@ export default {
         failedUpdatingRoom:
           "¡No se pudo actualizar la sala en la base de datos!",
         failedReadingRoom: "¡No se pudo leer la sala de la base de datos!",
-        failedDeletingFieldsFromRoom: "¡No se pudieron eliminar los campos en la sala de la base de datos!"
+        failedDeletingFieldsFromRoom:
+          "¡No se pudieron eliminar los campos en la sala de la base de datos!",
       },
     },
   },

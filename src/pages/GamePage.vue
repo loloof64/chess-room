@@ -242,7 +242,8 @@ function resizeBoard() {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  boardSize.value = `${minSize * 0.8}`;
+  const coeff = minSize < 1000 ? 0.4 : 0.8;
+  boardSize.value = `${minSize * coeff}`;
 }
 
 async function startNewGame() {
@@ -1048,7 +1049,7 @@ onMounted(() => {
 }
 
 @media (max-width: 1000px) {
-  #root {
+  #pageRoot {
     flex-direction: column;
   }
 
@@ -1057,6 +1058,31 @@ onMounted(() => {
   }
 
   #buttons > button > img {
+    width: 6vw;
+    height: 6vw;
+  }
+
+  .clock {
+    font-size: 1.5rem;
+  }
+
+  .nickname > td {
+    font-size: xx-small;
+  }
+
+  .nickname > td:nth-child(1) {
+    width: 6vw;
+  }
+
+  .nickname > td:nth-child(2) {
+    width: 20vw;
+  }
+
+  .nickname > td:nth-child(3) {
+    width: 6vw;
+  }
+
+  .nickname > td > img {
     width: 6vw;
     height: 6vw;
   }

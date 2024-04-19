@@ -5,6 +5,7 @@ import { createPinia } from "pinia";
 import Notifications from "@kyvg/vue3-notification";
 import "./style.css";
 import ChessboardVueComponent from "chessboard-vue";
+import EditableBoardVueComponent from "editableboard-vue";
 import App from "./App.vue";
 
 import messages from "./i18n";
@@ -39,10 +40,12 @@ const i18n = createI18n({
 
 const pinia = createPinia();
 
-import 'chessboard-vue/dist/style.css'
+import "chessboard-vue/dist/style.css";
+import "editableboard-vue/dist/style.css";
 
 createApp(App)
   .use(ChessboardVueComponent)
+  .use(EditableBoardVueComponent)
   .use(pinia)
   .use(router)
   .use(i18n)

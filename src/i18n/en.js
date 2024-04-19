@@ -57,7 +57,13 @@ export default {
       includeTime: "Play with clock ?",
       includeTimeYes: "Yes",
       includeTimeNo: "No",
-      timeSetToZero: "You gave a time of zero (without the increment) !"
+      timeSetToZero: "You gave a time of zero (without the increment) !",
+      editStartPosition: "Edit",
+      copyFen: "Copy FEN",
+      pasteFen: "Paste FEN",
+      resetFen: "Reset",
+      defaultFen: "Default",
+      clearFen: "Clear",
     },
     giveUp: {
       title: "Give up ?",
