@@ -62,17 +62,56 @@ onMounted(() => {
   editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
 });
 
-const generatedPosition = computed(() => {
-  return editableBoard.value.getBoardCode() + " w - - 0 1";
-});
+function getCastlesString() {
+  let result = "";
+
+  if (whiteOO.value) result += "K";
+  if (whiteOOO.value) result += "Q";
+  if (blackOO.value) result += "k";
+  if (blackOOO.value) result += "q";
+
+  return result.length > 0 ? result : "-";
+}
+
+function generatePosition() {
+  const boardPart = editableBoard.value.getBoardCode();
+  const turnPart = withWhiteSide.value ? "w" : "b";
+  const castlesPart = getCastlesString();
+  const enPassantPart =
+    enPassant.value === t("pages.newGame.noEnPassant") ? "-" : enPassant.value;
+  const drawHalfMovesPart = nullityHalfMovesCount.value.toString();
+  const moveNumberPart = moveNumber.value.toString();
+  return (
+    boardPart +
+    " " +
+    turnPart +
+    " " +
+    castlesPart +
+    " " +
+    enPassantPart +
+    " " +
+    drawHalfMovesPart +
+    " " +
+    moveNumberPart
+  );
+};
 
 function startNewGame() {
   if (includeTime.value && timeMinutes.value === 0 && timeSeconds.value === 0) {
     notify(t("pages.newGame.timeSetToZero"));
     return;
   }
+  const startPosition = generatePosition();
+
+  ///////////////////////TODO remove
+  console.log(startPosition);
+  return;
+  ////////////////////////////////////
+
+  //TODO set back
+  /*
   const newGameData = {
-    startPosition: generatedPosition.value,
+    startPosition,
     withWhiteSide: withWhiteSide.value,
     withClock: includeTime.value,
     clockMinutes: timeMinutes.value,
@@ -80,6 +119,7 @@ function startNewGame() {
     incrementSeconds: incrementSeconds.value,
   };
   closeDialog(newGameData);
+  */
 }
 
 function cancel() {
@@ -193,15 +233,8 @@ defineExpose({
             />
           </div>
           <div class="field">
-            <label for="moveNumber">{{
-              t("pages.newGame.moveNumber")
-            }}</label>
-            <input
-              id="moveNumber"
-              type="number"
-              v-model="moveNumber"
-              min="1"
-            />
+            <label for="moveNumber">{{ t("pages.newGame.moveNumber") }}</label>
+            <input id="moveNumber" type="number" v-model="moveNumber" min="1" />
           </div>
         </aside>
         <aside>
