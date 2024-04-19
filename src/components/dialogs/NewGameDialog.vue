@@ -5,6 +5,20 @@ import { notify } from "@kyvg/vue3-notification";
 import { Chess, DEFAULT_POSITION } from "chess.js";
 const { t } = useI18n();
 
+import { storeToRefs } from "pinia";
+
+import { useNewGameStore } from "@/stores/NewGameStore.js";
+
+const newGameStore = useNewGameStore();
+
+const {
+  startPosition,
+  startTimeMinutes,
+  startTimeSeconds,
+  increment,
+  useClock,
+} = storeToRefs(newGameStore);
+
 import { closeDialog } from "vue3-promise-dialog";
 
 import EditedValue from "@/components/EditedValue.vue";
@@ -61,10 +75,6 @@ const epChoicesBlack = [
 
 const enPassantChoices = computed(() => {
   return withWhiteSide.value ? epChoicesWhite : epChoicesBlack;
-});
-
-onMounted(() => {
-  editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
 });
 
 function getCastlesString() {
@@ -152,16 +162,22 @@ function startNewGame() {
     notify({ text: t("pages.newGame.timeSetToZero"), type: "error" });
     return;
   }
-  const startPosition = generatePosition();
+  const initialPosition = generatePosition();
 
-  const isLegal = checkLegality(startPosition);
+  const isLegal = checkLegality(initialPosition);
   if (!isLegal) {
     notify({ text: t("pages.newGame.refusedCopyingPosition"), type: "error" });
     return;
   }
 
+  newGameStore.setStartPosition(initialPosition);
+  newGameStore.setUseClockStatus(includeTime.value);
+  newGameStore.setStartTimeMinutes(timeMinutes.value);
+  newGameStore.setStartTimeSeconds(timeSeconds.value);
+  newGameStore.setIncrement(incrementSeconds.value);
+
   const newGameData = {
-    startPosition,
+    startPosition: initialPosition,
     withWhiteSide: withWhiteSide.value,
     withClock: includeTime.value,
     clockMinutes: timeMinutes.value,
@@ -240,6 +256,15 @@ onMounted(() => {
   }
 
   setFromPosition(originPosition.value);
+  includeTime.value = useClock.value;
+  timeMinutes.value = startTimeMinutes.value;
+  timeSeconds.value = startTimeSeconds.value;
+  incrementSeconds.value = increment.value;
+});
+
+onMounted(() => {
+  setFromPosition(startPosition.value);
+  editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
 });
 
 function handleDefault() {
