@@ -242,7 +242,8 @@ function resizeBoard() {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  const coeff = minSize < 1000 ? 0.4 : 0.8;
+  const isPortrait = window.innerWidth < window.innerHeight;
+  const coeff = isPortrait || window.innerWidth < 1000 ? 0.4 : 0.75;
   boardSize.value = `${minSize * coeff}`;
 }
 
