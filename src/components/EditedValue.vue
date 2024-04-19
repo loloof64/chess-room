@@ -36,7 +36,7 @@ function changeValueLeft() {
       value.value = "";
       break;
     case "n":
-      value.value = "b";
+      value.value = "p";
       break;
     case "b":
       value.value = "n";
