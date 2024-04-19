@@ -8,6 +8,10 @@ import { closeDialog } from "vue3-promise-dialog";
 
 import EditedValue from "@/components/EditedValue.vue";
 
+import reverse from "@/assets/images/reverse.svg";
+
+const reversed = ref(false);
+
 const editableBoard = ref();
 const editedValue = ref();
 const previewSize = ref(100);
@@ -17,6 +21,11 @@ const includeTime = ref(true);
 const timeMinutes = ref(5);
 const timeSeconds = ref(0);
 const incrementSeconds = ref(0);
+
+const whiteOO = ref(true);
+const whiteOOO = ref(true);
+const blackOO = ref(true);
+const blackOOO = ref(true);
 
 onMounted(() => {
   editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
@@ -65,7 +74,7 @@ onMounted(() => {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  previewSize.value = minSize * 0.25;
+  previewSize.value = minSize * 0.30;
   centralSize.value = minSize * 0.05;
 });
 
@@ -84,10 +93,12 @@ defineExpose({
       </header>
       <section class="mainZone">
         <div class="boardZone">
+          <img :src="reverse" @click="reversed = !reversed" />
           <EditableBoardVue
             id="editableBoard"
             ref="editableBoard"
             :size="previewSize"
+            :reversed="reversed"
             :white-turn="withWhiteSide"
           />
           <EditedValue
@@ -105,6 +116,24 @@ defineExpose({
             <button>{{ t("pages.newGame.resetFen") }}</button>
             <button>{{ t("pages.newGame.defaultFen") }}</button>
             <button>{{ t("pages.newGame.clearFen") }}</button>
+          </div>
+        </aside>
+        <aside>
+          <div class="field">
+            <input type="checkbox" id="whiteOO" v-model="whiteOO" />
+            <label for="whiteOO">{{ t("pages.newGame.whiteOO") }}</label>
+          </div>
+          <div class="field">
+            <input type="checkbox" id="whiteOOO" v-model="whiteOOO" />
+            <label for="whiteOO">{{ t("pages.newGame.whiteOOO") }}</label>
+          </div>
+          <div class="field">
+            <input type="checkbox" id="blackOO" v-model="blackOO" />
+            <label for="blackOO">{{ t("pages.newGame.blackOO") }}</label>
+          </div>
+          <div class="field">
+            <input type="checkbox" id="blackOOO" v-model="blackOOO" />
+            <label for="blackOO">{{ t("pages.newGame.blackOOO") }}</label>
           </div>
         </aside>
         <aside>
@@ -268,12 +297,21 @@ button:has(> img) {
 .boardZone {
   display: flex;
   flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
+.boardZone > img {
+  width: 5vw;
+  height:  5vw;
+  border: 1px solid blue;
+  border-radius: 1vw;
+  margin: 0 5px
+}
 
 .mainZone > aside {
   display: flex;
-  height: 15vh;
+  height: 13vh;
   margin: 20px 10px;
   flex-direction: column;
   justify-content: flex-start;
@@ -283,6 +321,10 @@ button:has(> img) {
 
 .buttonsLine > button {
   font-size: smaller;
+}
+
+.field {
+  margin: 4px;
 }
 
 .field > * {

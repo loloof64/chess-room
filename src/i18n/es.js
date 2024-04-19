@@ -64,6 +64,10 @@ export default {
       resetFen: "Reiniciar",
       defaultFen: "Por defecto",
       clearFen: "Borrar",
+      whiteOO: "O-O Blanco",
+      whiteOOO: "O-O-O Blanco",
+      blackOO: "O-O Negro",
+      blackOOO: "O-O-O Negro",
     },
     giveUp: {
       title: "¿Abandonar?",

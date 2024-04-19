@@ -66,6 +66,10 @@ export default {
       resetFen: "Réinitialiser",
       defaultFen: "Par défaut",
       clearFen: "Effacer",
+      whiteOO: "O-O Blanc",
+      whiteOOO: "O-O-O Blanc",
+      blackOO: "O-O Noir",
+      blackOOO: "O-O-O Noir",
     },
     giveUp: {
       title: "Abandonner ?",

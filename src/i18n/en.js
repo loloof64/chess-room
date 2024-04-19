@@ -64,6 +64,10 @@ export default {
       resetFen: "Reset",
       defaultFen: "Default",
       clearFen: "Clear",
+      whiteOO: "White O-O",
+      whiteOOO: "White O-O-O",
+      blackOO: "Black O-O",
+      blackOOO: "Black O-O-O",
     },
     giveUp: {
       title: "Give up ?",
