@@ -6,7 +6,7 @@ A simple chess room
 
 ### Credentials
 
-#### Appwrite
+#### Cloud Firestore
 
 * Create a Cloud Firestore database.
 
