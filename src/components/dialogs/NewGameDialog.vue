@@ -266,10 +266,10 @@ button:has(> img) {
 
 .mainZone > aside {
   display: flex;
-  height: 18vh;
+  height: 15vh;
   margin: 20px 10px;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   overflow-y: scroll;
 }
