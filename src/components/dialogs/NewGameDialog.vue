@@ -83,17 +83,19 @@ defineExpose({
         <h2>{{ t("pages.newGame.title") }}</h2>
       </header>
       <section class="mainZone">
-        <EditableBoardVue
-          id="editableBoard"
-          ref="editableBoard"
-          :size="previewSize"
-          :white-turn="withWhiteSide"
-        />
-        <EditedValue
-          ref="editedValue"
-          @change="handleValueChange"
-          :centralSize="centralSize"
-        />
+        <div class="boardZone">
+          <EditableBoardVue
+            id="editableBoard"
+            ref="editableBoard"
+            :size="previewSize"
+            :white-turn="withWhiteSide"
+          />
+          <EditedValue
+            ref="editedValue"
+            @change="handleValueChange"
+            :centralSize="centralSize"
+          />
+        </div>
         <aside>
           <div class="buttonsLine">
             <button>{{ t("pages.newGame.copyFen") }}</button>
@@ -256,13 +258,18 @@ button.cancel {
 button:has(> img) {
   margin: 0px 20px;
 }
-
 .mainZone {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
+
+.boardZone {
+  display: flex;
+  flex-direction: row;
+}
+
 
 .mainZone > aside {
   display: flex;

@@ -178,14 +178,14 @@ defineExpose({
   <div class="_root">
     <!--top line-->
     <div></div>
-    <div class="button">
+    <div class="editedValueButton">
       <img :src="upArrow" @click="changeValueUpDown" />
     </div>
     <div></div>
     <!--top line-->
 
     <!-- middle line-->
-    <div class="button"><img :src="leftArrow" @click="changeValueLeft" /></div>
+    <div class="editedValueButton"><img :src="leftArrow" @click="changeValueLeft" /></div>
     <div class="_centralZone">
       <WP :size="piecesSize" v-if="value === 'P'" />
       <WN :size="piecesSize" v-else-if="value === 'N'" />
@@ -203,14 +203,14 @@ defineExpose({
 
       <img :src="bin" v-else />
     </div>
-    <div class="button">
+    <div class="editedValueButton">
       <img :src="rightArrow" @click="changeValueRight" />
     </div>
     <!-- middle line-->
 
     <!--bottom line-->
     <div></div>
-    <div class="button">
+    <div class="editedValueButton">
       <img :src="downArrow" @click="changeValueUpDown" />
     </div>
     <div></div>
@@ -227,7 +227,9 @@ defineExpose({
 
 ._centralZone {
   border: 1px solid blue;
-  padding: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   width: v-bind(centralSizePx);
   height: v-bind(centralSizePx);
 }
@@ -237,7 +239,7 @@ defineExpose({
   height: v-bind(centralSizePx);
 }
 
-.button {
+.editedValueButton {
   display: inline-flex;
   justify-content: center;
   align-items: center;
