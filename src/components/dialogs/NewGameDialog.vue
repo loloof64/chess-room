@@ -17,6 +17,7 @@ const {
   startTimeSeconds,
   increment,
   useClock,
+  hostHasWhite,
 } = storeToRefs(newGameStore);
 
 import { closeDialog } from "vue3-promise-dialog";
@@ -34,6 +35,7 @@ const editedValue = ref();
 const previewSize = ref(100);
 const centralSize = ref(100);
 const withWhiteSide = ref(true);
+const whiteTurn = ref(true);
 const includeTime = ref(true);
 const timeMinutes = ref(5);
 const timeSeconds = ref(0);
@@ -101,7 +103,7 @@ function checkLegality(positionFen) {
 
 function generatePosition() {
   const boardPart = editableBoard.value.getBoardCode();
-  const turnPart = withWhiteSide.value ? "w" : "b";
+  const turnPart = whiteTurn.value ? "w" : "b";
   const castlesPart = getCastlesString();
   const enPassantPart =
     enPassant.value === t("pages.newGame.noEnPassant") ? "-" : enPassant.value;
@@ -145,7 +147,7 @@ function setFromPosition(positionFen) {
   if (weCannotAccept) return false;
 
   editableBoard.value.setFromBoardCode(positionFen);
-  withWhiteSide.value = positionParts[1] === "w";
+  whiteTurn.value = positionParts[1] === "w";
   setCastlesFrom(positionParts[2]);
   enPassant.value =
     positionParts[3] === "-"
@@ -175,6 +177,7 @@ function startNewGame() {
   newGameStore.setStartTimeMinutes(timeMinutes.value);
   newGameStore.setStartTimeSeconds(timeSeconds.value);
   newGameStore.setIncrement(incrementSeconds.value);
+  newGameStore.setHostHasWhiteStatus(withWhiteSide.value);
 
   const newGameData = {
     startPosition: initialPosition,
@@ -191,9 +194,14 @@ function cancel() {
   closeDialog();
 }
 
-function handleGameTurnChange(e) {
+function handleHostTurnChange(e) {
   const newValue = e.target.value;
   withWhiteSide.value = newValue === "yes";
+}
+
+function handleGameTurnChange(e) {
+  const newValue = e.target.value;
+  whiteTurn.value = newValue === "yes";
   enPassant.value = t("pages.newGame.noEnPassant");
 }
 
@@ -256,6 +264,7 @@ onMounted(() => {
   }
 
   setFromPosition(originPosition.value);
+  withWhiteSide.value = hostHasWhite.value;
   includeTime.value = useClock.value;
   timeMinutes.value = startTimeMinutes.value;
   timeSeconds.value = startTimeSeconds.value;
@@ -296,7 +305,7 @@ defineExpose({
             ref="editableBoard"
             :size="previewSize"
             :reversed="reversed"
-            :white-turn="withWhiteSide"
+            :white-turn="whiteTurn"
           />
           <EditedValue
             ref="editedValue"
@@ -326,6 +335,30 @@ defineExpose({
           </div>
         </aside>
         <aside>
+          <div class="field">
+            {{ t("pages.newGame.whiteTurn") }}
+            <input
+              type="radio"
+              name="whiteTurn"
+              id="whiteTurnYes"
+              value="yes"
+              :checked="whiteTurn"
+              @change="handleGameTurnChange"
+            />
+            <label for="whiteTurnYes">{{
+              t("pages.newGame.hasWhiteYes")
+            }}</label>
+
+            <input
+              type="radio"
+              name="whiteTurn"
+              id="whiteTurnNo"
+              value="no"
+              :checked="!whiteTurn"
+              @change="handleGameTurnChange"
+            />
+            <label for="whiteTurnNo">{{ t("pages.newGame.hasWhiteNo") }}</label>
+          </div>
           <div class="field">
             <input type="checkbox" id="whiteOO" v-model="whiteOO" />
             <label for="whiteOO">{{ t("pages.newGame.whiteOO") }}</label>
@@ -381,7 +414,7 @@ defineExpose({
               id="hasWhiteYes"
               value="yes"
               :checked="withWhiteSide"
-              @change="handleGameTurnChange"
+              @change="handleHostTurnChange"
             />
             <label for="hasWhiteYes">{{
               t("pages.newGame.hasWhiteYes")
@@ -393,7 +426,7 @@ defineExpose({
               id="hasWhiteNo"
               value="no"
               :checked="!withWhiteSide"
-              @change="handleGameTurnChange"
+              @change="handleHostTurnChange"
             />
             <label for="hasWhiteNo">{{ t("pages.newGame.hasWhiteNo") }}</label>
           </div>

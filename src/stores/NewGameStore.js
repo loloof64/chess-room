@@ -9,7 +9,8 @@ export const useNewGameStore = defineStore("NewGameStore", {
         "NewGameStore$startPosition",
         DEFAULT_POSITION
       ),
-      useClock: useSessionStorage("NewGameStore$useClock", false),
+      hostHasWhite: useSessionStorage("NewGameStore$hostHasWhite", true),
+      useClock: useSessionStorage("NewGameStore$useClock", true),
       startTimeMinutes: useSessionStorage("NewGameStore$startTimeMinutes", 5),
       startTimeSeconds: useSessionStorage("NewGameStore$startTimeSeconds", 0),
       increment: useSessionStorage("NewGameStore$increment", 0),
@@ -18,6 +19,9 @@ export const useNewGameStore = defineStore("NewGameStore", {
   actions: {
     setStartPosition(newValue) {
       this.startPosition = newValue;
+    },
+    setHostHasWhiteStatus(newValue) {
+      this.hostHasWhite = newValue;
     },
     setUseClockStatus(newValue) {
       this.useClock = newValue;
