@@ -380,7 +380,7 @@ defineExpose({
               name="hasWhite"
               id="hasWhiteYes"
               value="yes"
-              checked
+              :checked="withWhiteSide"
               @change="handleGameTurnChange"
             />
             <label for="hasWhiteYes">{{
@@ -392,6 +392,7 @@ defineExpose({
               name="hasWhite"
               id="hasWhiteNo"
               value="no"
+              :checked="!withWhiteSide"
               @change="handleGameTurnChange"
             />
             <label for="hasWhiteNo">{{ t("pages.newGame.hasWhiteNo") }}</label>
@@ -403,7 +404,7 @@ defineExpose({
               name="includeTime"
               id="includeTimeYes"
               value="yes"
-              checked
+              :checked="includeTime"
               @change="handleIncludeTimeChange"
             />
             <label for="includeTimeYes">{{
@@ -415,6 +416,7 @@ defineExpose({
               name="includeTime"
               id="includeTimeNo"
               value="no"
+              :checked="!includeTime"
               @change="handleIncludeTimeChange"
             />
             <label for="includeTimeNo">{{
