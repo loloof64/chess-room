@@ -68,6 +68,10 @@ export default {
       whiteOOO: "White O-O-O",
       blackOO: "Black O-O",
       blackOOO: "Black O-O-O",
+      enPassantLabel: "En passant",
+      noEnPassant: "None",
+      nullityHalfMovesCount: "Half-moves count for draw",
+      moveNumber: "Move number",
     },
     giveUp: {
       title: "Give up ?",

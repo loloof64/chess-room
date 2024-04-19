@@ -70,6 +70,10 @@ export default {
       whiteOOO: "O-O-O Blanc",
       blackOO: "O-O Noir",
       blackOOO: "O-O-O Noir",
+      enPassantLabel: "En passant",
+      noEnPassant: "Aucun",
+      nullityHalfMovesCount: "Demi-coups pour la nulle",
+      moveNumber: "Numéro de coup",
     },
     giveUp: {
       title: "Abandonner ?",

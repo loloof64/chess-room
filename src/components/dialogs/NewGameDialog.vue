@@ -21,11 +21,42 @@ const includeTime = ref(true);
 const timeMinutes = ref(5);
 const timeSeconds = ref(0);
 const incrementSeconds = ref(0);
+const nullityHalfMovesCount = ref(0);
+const moveNumber = ref(1);
 
 const whiteOO = ref(true);
 const whiteOOO = ref(true);
 const blackOO = ref(true);
 const blackOOO = ref(true);
+
+const enPassant = ref(t("pages.newGame.noEnPassant"));
+
+const epChoicesWhite = [
+  t("pages.newGame.noEnPassant"),
+  "a6",
+  "b6",
+  "c6",
+  "d6",
+  "e6",
+  "f6",
+  "g6",
+  "h6",
+];
+const epChoicesBlack = [
+  t("pages.newGame.noEnPassant"),
+  "a3",
+  "b3",
+  "c3",
+  "d3",
+  "e3",
+  "f3",
+  "g3",
+  "h3",
+];
+
+const enPassantChoices = computed(() => {
+  return withWhiteSide.value ? epChoicesWhite : epChoicesBlack;
+});
 
 onMounted(() => {
   editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
@@ -58,6 +89,7 @@ function cancel() {
 function handleGameTurnChange(e) {
   const newValue = e.target.value;
   withWhiteSide.value = newValue === "yes";
+  enPassant.value = t("pages.newGame.noEnPassant");
 }
 
 function handleIncludeTimeChange(e) {
@@ -74,7 +106,7 @@ onMounted(() => {
     window.innerWidth < window.innerHeight
       ? window.innerWidth
       : window.innerHeight;
-  previewSize.value = minSize * 0.30;
+  previewSize.value = minSize * 0.3;
   centralSize.value = minSize * 0.05;
 });
 
@@ -134,6 +166,42 @@ defineExpose({
           <div class="field">
             <input type="checkbox" id="blackOOO" v-model="blackOOO" />
             <label for="blackOO">{{ t("pages.newGame.blackOOO") }}</label>
+          </div>
+          <div class="field">
+            <label for="enPassant">{{
+              t("pages.newGame.enPassantLabel")
+            }}</label>
+            <select id="enPassant" v-model="enPassant">
+              <option
+                v-for="value in enPassantChoices"
+                :key="value"
+                :value="value"
+              >
+                {{ value }}
+              </option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="nullityHalfMovesCount">{{
+              t("pages.newGame.nullityHalfMovesCount")
+            }}</label>
+            <input
+              id="nullityHalfMovesCount"
+              type="number"
+              v-model="nullityHalfMovesCount"
+              min="0"
+            />
+          </div>
+          <div class="field">
+            <label for="moveNumber">{{
+              t("pages.newGame.moveNumber")
+            }}</label>
+            <input
+              id="moveNumber"
+              type="number"
+              v-model="moveNumber"
+              min="1"
+            />
           </div>
         </aside>
         <aside>
@@ -303,10 +371,10 @@ button:has(> img) {
 
 .boardZone > img {
   width: 5vw;
-  height:  5vw;
+  height: 5vw;
   border: 1px solid blue;
   border-radius: 1vw;
-  margin: 0 5px
+  margin: 0 5px;
 }
 
 .mainZone > aside {

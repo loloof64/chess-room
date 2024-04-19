@@ -68,6 +68,10 @@ export default {
       whiteOOO: "O-O-O Blanco",
       blackOO: "O-O Negro",
       blackOOO: "O-O-O Negro",
+      enPassantLabel: "De paso",
+      noEnPassant: "Ninguno",
+      nullityHalfMovesCount: "Medios movimientos para empatar",
+      moveNumber: "Movimiento número",
     },
     giveUp: {
       title: "¿Abandonar?",
