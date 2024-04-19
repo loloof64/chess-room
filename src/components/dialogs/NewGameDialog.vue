@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { notify } from "@kyvg/vue3-notification";
+import { Chess, DEFAULT_POSITION } from "chess.js";
 const { t } = useI18n();
 
 import { closeDialog } from "vue3-promise-dialog";
@@ -9,6 +10,8 @@ import { closeDialog } from "vue3-promise-dialog";
 import EditedValue from "@/components/EditedValue.vue";
 
 import reverse from "@/assets/images/reverse.svg";
+
+const props = defineProps(["initialPosition"]);
 
 const reversed = ref(false);
 
@@ -30,6 +33,8 @@ const blackOO = ref(true);
 const blackOOO = ref(true);
 
 const enPassant = ref(t("pages.newGame.noEnPassant"));
+
+const originPosition = ref();
 
 const epChoicesWhite = [
   t("pages.newGame.noEnPassant"),
@@ -73,6 +78,17 @@ function getCastlesString() {
   return result.length > 0 ? result : "-";
 }
 
+function checkLegality(positionFen) {
+  if (positionFen === undefined) return false;
+  try {
+    new Chess(positionFen);
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
 function generatePosition() {
   const boardPart = editableBoard.value.getBoardCode();
   const turnPart = withWhiteSide.value ? "w" : "b";
@@ -81,7 +97,8 @@ function generatePosition() {
     enPassant.value === t("pages.newGame.noEnPassant") ? "-" : enPassant.value;
   const drawHalfMovesPart = nullityHalfMovesCount.value.toString();
   const moveNumberPart = moveNumber.value.toString();
-  return (
+
+  const newPosition =
     boardPart +
     " " +
     turnPart +
@@ -92,24 +109,57 @@ function generatePosition() {
     " " +
     drawHalfMovesPart +
     " " +
-    moveNumberPart
-  );
-};
+    moveNumberPart;
+
+  const isLegal = checkLegality(newPosition);
+  return isLegal ? newPosition : undefined;
+}
+
+function setCastlesFrom(values) {
+  whiteOO.value = values.includes("K");
+  whiteOOO.value = values.includes("Q");
+  blackOO.value = values.includes("k");
+  blackOO.value = values.includes("q");
+}
+
+function setFromPosition(positionFen) {
+  const positionParts = positionFen.split(" ");
+
+  if (positionParts.length < 6) return false;
+
+  const newNullityHalfMovesCount = parseInt(positionParts[4]);
+  const newMoveNumber = parseInt(positionParts[5]);
+  const weCannotAccept =
+    isNaN(newNullityHalfMovesCount) || isNaN(newMoveNumber);
+
+  if (weCannotAccept) return false;
+
+  editableBoard.value.setFromBoardCode(positionFen);
+  withWhiteSide.value = positionParts[1] === "w";
+  setCastlesFrom(positionParts[2]);
+  enPassant.value =
+    positionParts[3] === "-"
+      ? t("pages.newGame.noEnPassant")
+      : positionParts[3];
+  nullityHalfMovesCount.value = newNullityHalfMovesCount;
+  moveNumber.value = newMoveNumber;
+
+  return true;
+}
 
 function startNewGame() {
   if (includeTime.value && timeMinutes.value === 0 && timeSeconds.value === 0) {
-    notify(t("pages.newGame.timeSetToZero"));
+    notify({ text: t("pages.newGame.timeSetToZero"), type: "error" });
     return;
   }
   const startPosition = generatePosition();
 
-  ///////////////////////TODO remove
-  console.log(startPosition);
-  return;
-  ////////////////////////////////////
+  const isLegal = checkLegality(startPosition);
+  if (!isLegal) {
+    notify({ text: t("pages.newGame.refusedCopyingPosition"), type: "error" });
+    return;
+  }
 
-  //TODO set back
-  /*
   const newGameData = {
     startPosition,
     withWhiteSide: withWhiteSide.value,
@@ -119,7 +169,6 @@ function startNewGame() {
     incrementSeconds: incrementSeconds.value,
   };
   closeDialog(newGameData);
-  */
 }
 
 function cancel() {
@@ -141,6 +190,38 @@ function handleValueChange() {
   editableBoard.value.setCurrentEditingValue(editedValue.value.getValue());
 }
 
+async function handleCopy() {
+  const newPosition = generatePosition();
+
+  if (newPosition) {
+    await navigator.clipboard.writeText(newPosition);
+    notify({ text: t("pages.newGame.copiedPosition") });
+  } else {
+    notify({ text: t("pages.newGame.refusedCopyingPosition"), type: "error" });
+  }
+}
+
+async function handlePaste() {
+  const newPosition = await navigator.clipboard.readText();
+  if (newPosition.length === 0) {
+    notify({ text: t("pages.newGame.cannotCopyFromClipboard"), type: "error" });
+  }
+
+  const isLegal = checkLegality(newPosition);
+  if (!isLegal) {
+    notify({
+      text: t("pages.newGame.illegalPositionFromClipboard"),
+      type: "error",
+    });
+  }
+
+  setFromPosition(newPosition);
+}
+
+function handleReset() {
+  setFromPosition(originPosition.value);
+}
+
 onMounted(() => {
   const minSize =
     window.innerWidth < window.innerHeight
@@ -149,6 +230,25 @@ onMounted(() => {
   previewSize.value = minSize * 0.3;
   centralSize.value = minSize * 0.05;
 });
+
+onMounted(() => {
+  const legalInitialPosition = checkLegality(props.initialPosition);
+  if (legalInitialPosition) {
+    originPosition.value = props.initialPosition;
+  } else {
+    originPosition.value = DEFAULT_POSITION;
+  }
+
+  setFromPosition(originPosition.value);
+});
+
+function handleDefault() {
+  setFromPosition(DEFAULT_POSITION);
+}
+
+function handleErase() {
+  setFromPosition("8/8/8/8/8/8/8/8 w - - 0 1");
+}
 
 defineExpose({
   returnValue: () => {
@@ -181,13 +281,23 @@ defineExpose({
         </div>
         <aside>
           <div class="buttonsLine">
-            <button>{{ t("pages.newGame.copyFen") }}</button>
-            <button>{{ t("pages.newGame.pasteFen") }}</button>
+            <button @click="handleCopy">
+              {{ t("pages.newGame.copyFen") }}
+            </button>
+            <button @click="handlePaste">
+              {{ t("pages.newGame.pasteFen") }}
+            </button>
           </div>
           <div class="buttonsLine">
-            <button>{{ t("pages.newGame.resetFen") }}</button>
-            <button>{{ t("pages.newGame.defaultFen") }}</button>
-            <button>{{ t("pages.newGame.clearFen") }}</button>
+            <button @click="handleReset">
+              {{ t("pages.newGame.resetFen") }}
+            </button>
+            <button @click="handleDefault">
+              {{ t("pages.newGame.defaultFen") }}
+            </button>
+            <button @click="handleErase">
+              {{ t("pages.newGame.clearFen") }}
+            </button>
           </div>
         </aside>
         <aside>

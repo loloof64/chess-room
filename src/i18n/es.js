@@ -72,6 +72,10 @@ export default {
       noEnPassant: "Ninguno",
       nullityHalfMovesCount: "Medios movimientos para empatar",
       moveNumber: "Movimiento número",
+      copiedPosition: "Posición copiada en el portapapeles.",
+      refusedCopyingPosition: "¡Posición ilegal!¡Además, verifique todos los parámetros!",
+      cannotCopyFromClipboard: "¡No se puede obtener contenido de texto del portapapeles!",
+      illegalPositionFromClipboard: "¡El contenido del portapapeles no es una posición legal!",
     },
     giveUp: {
       title: "¿Abandonar?",

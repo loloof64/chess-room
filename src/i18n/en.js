@@ -72,6 +72,10 @@ export default {
       noEnPassant: "None",
       nullityHalfMovesCount: "Half-moves count for draw",
       moveNumber: "Move number",
+      copiedPosition: "Copied position into clipboard.",
+      refusedCopyingPosition: "Illegal position ! Also, check all parameters !",
+      cannotCopyFromClipboard: "Cannot get text content from clipboard !",
+      illegalPositionFromClipboard: "Clipboard's content is not a legal position !",
     },
     giveUp: {
       title: "Give up ?",

@@ -74,6 +74,11 @@ export default {
       noEnPassant: "Aucun",
       nullityHalfMovesCount: "Demi-coups pour la nulle",
       moveNumber: "Numéro de coup",
+      oveNumber: "Movimiento número",
+      copiedPosition: "Position copiée dans le porte-papiers.",
+      refusedCopyingPosition: "Position illégale ! Vérifiez tous les paramètres !",
+      cannotCopyFromClipboard: "Impossible de récupérer du texte à partir du presse-papier !",
+      illegalPositionFromClipboard: "Le presse-papier ne contient pas de position légale !",
     },
     giveUp: {
       title: "Abandonner ?",
