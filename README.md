@@ -26,6 +26,12 @@ export default {
 export const expectedOrigin = <TheExpectedOriginFromYourSecurityRule>;
 ```
 
+### Building
+
+1. install dependencies : `bun install` as example for Bun package manager.
+2. compile : `bun run build && bun run export`
+3. deploy
+
 ## Credits
 
 ### Fonts

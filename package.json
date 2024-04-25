@@ -13,7 +13,7 @@
     "@kyvg/vue3-notification": "^3.2.1",
     "@vueuse/core": "^10.9.0",
     "chess.js": "^1.0.0-beta.8",
-    "chessboard-vue": "^1.5.2",
+    "chessboard-vue": "^1.6.0",
     "date-fns": "^3.6.0",
     "editableboard-vue": "^1.1.2",
     "firebase": "^10.11.0",
